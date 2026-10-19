@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-The core owns generic estate classification, financial calculations, source evidence, navigation, filtering, exports and offline assembly. Customer repositories own branding, cleansing rules, contract interpretation and additional customer behavior. Source files and report artifacts remain outside this repository.
+The shared repository owns generic estate classification, financial calculations, source evidence, navigation, filtering, exports and offline assembly. Each customer uses an ordinary local Codex project folder for branding, cleansing rules, contract interpretation and additional behavior. Customer files stay outside the shared core. No customer repository or fork is required.
 
 The existing multi-customer release coordinator, fixed source paths, historical release registry, workbooks, report outputs and customer extraction scripts were deliberately not imported. The generic core has its own release sequence.
 
@@ -37,10 +37,12 @@ Identical source/configuration/code and output options yield identical HTML. Bui
 
 An external `extensionFile` may declare `const DashboardExtension = { transformRecords(records, context) { ... } }`. It executes within the report whenever records are normalized, including after workbook refresh. Context contains `source`, `config` and `options`; `options.includeInactive` distinguishes the complete entity directory from Active financial reporting.
 
-The hook must be deterministic, synchronous and return a record array. Preserve record IDs, sheet names, original row pointers, raw financial fields and status scope. Add flags or additional derived fields rather than changing historical source facts. Validate contract calculations with examples in the customer repository. Extensions are trusted executable code, not a sandbox, and are embedded in saved customer reports. The core performs syntax checking; extension-specific semantics require customer tests.
+The hook must be deterministic, synchronous and return a record array. Preserve record IDs, sheet names, original row pointers, raw financial fields and status scope. Add flags or additional derived fields rather than changing historical source facts. Validate contract calculations with examples in the local customer project. Extensions are trusted executable code, not a sandbox, and are embedded in saved customer reports. The core performs syntax checking; extension-specific semantics require customer tests.
 
 Contract notes are plain text rendered under Data & assumptions. They do not execute calculations. Specialized contract reports require an extension or a separately tested customer tool.
 
 ## Distribution
 
-Customer projects should use an exact Git commit, release archive or checked dependency version. They should not track a moving branch for production reports. This repository can be consumed as a private Git dependency using the exported `exec-dashboard` command. Authentication is required to retrieve a private core; no credentials are needed to open a built report.
+Each local Codex project downloads a fixed release archive into a versioned folder under `_core/` and records it in CORE_VERSION.txt. Customer configuration and extensions live alongside the unchanged core copy. Invoke the builder directly with Node.js; normal customer use requires no Git repository or package installation.
+
+Private repository access is required to download or update the core. After download, builds and reports work locally without repository access. A repository URL alone does not provide executable files. Updates are deliberate: retain the old core, test a new version with the same inputs and then update the version record.

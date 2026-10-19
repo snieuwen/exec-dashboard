@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Rewrote onboarding around local Codex customer projects using a downloaded, fixed shared-core release. Removed customer repository and package-manager requirements; added local project instructions, upgrade and handover guidance. Dashboard functionality is unchanged.
+
 ## 0.1.0 — 2026-10-19
 
 - Extracted a standalone, customer-neutral executive dashboard core.

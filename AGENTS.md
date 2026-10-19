@@ -2,7 +2,7 @@
 
 - Read README.md and the relevant documents in docs/ before changing affected behavior.
 - This is a customer-neutral reusable core. Customer names, logos, data, contract text, private source paths, populated reports, snapshots and customer-specific exceptions do not belong here.
-- Keep customer configuration, CSS and extension code in separate customer projects. Never add customer forks to core source files.
+- Customer users work in ordinary local Codex project folders with a fixed core release under _core/. They do not need their own repository or fork. Keep customer configuration, CSS, extension code, knowledge and data outside the unchanged core copy.
 - Maintain src/model.js as the shared financial model. Browser and build-time processing must use identical source preparation rules in src/rules.js.
 - Preserve raw source values and source-row lineage. Distinguish missing values from zero and require dated exchange rates for conversion.
 - Do not infer hardware annual support or purchase currency from another customer's assumptions. See docs/FINANCIAL_BASIS.md.

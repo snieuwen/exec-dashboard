@@ -6,7 +6,9 @@ This repository contains **no customer data, logos, customer themes, contract cl
 
 ## Start here
 
-Install Node.js 22 or later, clone this private repository, then run:
+For customer work, follow the [local Codex project setup](docs/CUSTOMER_SETUP.md). Each person needs a local folder and access to this shared private repository. No customer repository, fork, Git installation or package manager is required.
+
+To try the generic core directly, install Node.js 22 or later, download a tagged release, extract it and run this from the extracted core folder:
 
 ```sh
 node scripts/build.cjs
@@ -34,30 +36,37 @@ Support, subscriptions and one-time purchases remain separate. Quantities are gr
 
 ## Customer projects
 
-Keep one small private repository per customer. Pin this core to an immutable commit or release and store only that customer's configuration, theme and extensions there. Keep source files and generated reports in the customer's controlled document store.
+Create an ordinary local folder and open it as a Codex project. Download a fixed release of this shared core into `_core/`. Keep customer settings, styling, extensions, knowledge and files alongside it. Only the generic functionality is maintained in GitHub.
 
 ```text
 customer-project/
-  package.json            # Exact core commit or release
+  AGENTS.md               # Local instructions for Codex
+  CORE_VERSION.txt        # Exact shared core release used
+  _core/
+    exec-dashboard-0.1.0/ # Downloaded core; keep unchanged
   customer.json           # Settings and cleansing rules
   customer.css            # Optional customer theme
   extension.js            # Optional trusted customer code
   docs/                   # Contract interpretations and source references
+  data/                   # Inputs, or references to shared source files
+  outputs/                # Customer reports and manifests
 ```
 
-Build against an external customer configuration:
+From the local customer project folder, build using the downloaded core:
 
 ```sh
-node scripts/build.cjs --config ../customer-project/customer.json --output ../customer-project/outputs/dashboard.html
+node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
 ```
 
 For a reproducible populated build, provide a prepared JSON source and its snapshot date:
 
 ```sh
-node scripts/build.cjs --config ../customer-project/customer.json --source ../customer-project/data/source.json --snapshot 2026-01-31 --output ../customer-project/outputs/dashboard.html
+node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
 ```
 
 See [customer setup](docs/CUSTOMER_SETUP.md), [architecture](docs/ARCHITECTURE.md), [financial definitions](docs/FINANCIAL_BASIS.md) and [the example configuration](examples/customer-config.json).
+
+The repository URL identifies the shared source; it does not automatically make the code available locally. Download the chosen release once, then build and open reports offline. To upgrade, download a new version into a second folder, compare results and update `CORE_VERSION.txt` when satisfied.
 
 ## Verification
 
