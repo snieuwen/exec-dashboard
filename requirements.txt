@@ -1,0 +1,2 @@
+# Optional workbook preparation only; not needed for the dashboard build/runtime.
+openpyxl==3.1.5

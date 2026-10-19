@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "label": "Executive dashboard",
+  "title": "Executive dashboard | Oracle estate",
+  "reportCurrency": "USD",
+  "scopeNote": "Scope follows the supplied source. Confirm the customer perimeter before reporting.",
+  "financial": {
+    "hardwareSupportAnnual": false,
+    "hardwarePurchaseCurrency": "order",
+    "softwarePurchaseCurrency": "order"
+  },
+  "cleansing": [],
+  "reviewEntities": [],
+  "contractNotes": [],
+  "fxDefaults": {}
+}

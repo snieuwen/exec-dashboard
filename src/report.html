@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+
+
+
+
+
+
+
+
+
+
+<style>__CSS__</style><style>__CUSTOMER_CSS__</style></head>
+<body>
+<div class="shell">
+ <aside class="sidebar"><div><div class="brand">__LABEL__</div><div class="brand-sub">ORACLE ESTATE BRIEFING</div></div>
+ <nav class="nav" aria-label="Report sections">
+  <button data-view="notice" aria-current="page">About this report</button><button data-view="overview">Executive overview</button><button data-view="atlas">Estate atlas</button><button data-view="portfolio">Portfolio &amp; details</button><button data-view="geography">Worldwide footprint</button><button data-view="recent">Recent Purchases</button><button data-view="aging">Hardware aging</button><button data-view="renewals">Renewals & endings</button><button data-view="data">Data & assumptions</button>
+ </nav><div class="sidebar-foot"><strong>Core v__VERSION__</strong><br>Active Source data records<br><span id="sidebar-date">No source loaded</span><br><br>Global insight.<br>Traceable detail.</div></aside>
+ <div class="workspace">
+ <header class="topline"><div><span class="pill orange">DRAFT</span> <span class="small muted">Worldwide commercial estate</span></div><div class="top-actions"><button class="primary" id="open-eix" title="Open a processed Source data dashboard source workbook from this device.">Open Source data file</button><input id="quick-source-file" type="file" accept=".xlsx" hidden><span id="quick-load-status" class="status-message" role="status"></span><button id="export" title="Download a CSV of source lines matching the current filters; not the visual dashboard.">Export selected evidence</button><button id="print" title="Print the current report page or choose a PDF destination. Other dashboard pages are not included.">Print / Save PDF</button><button id="save-report" title="Download the complete interactive HTML, including the complete current source extract, rates and settings—not just the filtered selection.">Save report</button><button class="info" data-help="sharing" aria-label="Explain export, print and save" title="What do export, print and save include?">ⓘ</button></div></header>
+ <div class="filters" aria-label="Global filters">
+ <label>Portfolio<select id="area"><option value="">All portfolios</option></select></label><label>Purchasing country<select id="country"><option value="">All countries</option></select></label><label>Customer / entity<select id="entity"><option value="">All customer records</option></select></label><label class="search">Search evidence<input id="query" type="search" placeholder="Product, order, contract, CSI…"></label><label>Report currency<select class="currency-select" id="currency"><option>USD</option><option>AUD</option><option>BRL</option><option>CHF</option><option>CNY</option><option>EUR</option><option>GBP</option><option>INR</option><option>JPY</option><option>MXN</option><option>PLN</option><option>SAR</option><option>SGD</option><option>TRY</option></select></label><button id="reset">Reset filters</button>
+ </div>
+ <main class="content" id="main"></main>
+ </div>
+</div>
+<dialog id="detail"><div class="dialog-head"><div><div class="eyebrow" id="detail-type">Evidence</div><h2 id="detail-title"></h2></div><button id="close-detail" aria-label="Close evidence details">Close</button></div><div class="dialog-body" id="detail-body"></div></dialog>
+<dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-head"><h2 id="help-title"></h2><button id="close-help" aria-label="Close explanation">Close</button></div><div class="dialog-body" id="help-body"></div></dialog>
+<div id="announcement" class="sr-only" aria-live="polite"></div>
+<script id="report-source" type="application/json">__SOURCE__</script>
+<script id="report-meta" type="application/json">__META__</script>
+<script id="report-build" type="application/json">__BUILD__</script>
+
+
+<script id="customer-config" type="application/json">__CUSTOMER_CONFIG__</script>
+<script id="source-schema" type="application/json">__SCHEMA__</script>
+<script>__RULES__</script><script>__EXTENSION__</script>
+<script id="report-config" type="application/json">{}</script>
+<script id="atlas-geography" type="application/json">__ATLAS_GEOGRAPHY__</script>
+<script id="atlas-licenses" type="application/json">__ATLAS_LICENSES__</script>
+<script>__MODEL__</script><script>Estate.configure(JSON.parse(document.getElementById("customer-config").textContent));</script>
+<script>__ATLAS__</script>
+
+<script>__XLSX__</script>
+<script>__APP__</script>
+</body></html>
