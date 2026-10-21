@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.1.0** is the first independent core release, extracted from the existing dashboard implementation.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.2.0** includes mandatory inactive-row cleansing, building on the independently versioned generic core.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -43,7 +43,7 @@ customer-project/
   AGENTS.md               # Local instructions for Codex
   CORE_VERSION.txt        # Exact shared core release used
   _core/
-    exec-dashboard-0.1.0/ # Downloaded core; keep unchanged
+    exec-dashboard-0.2.0/ # Downloaded core; keep unchanged
   customer.json           # Settings and cleansing rules
   customer.css            # Optional customer theme
   extension.js            # Optional trusted customer code
@@ -55,13 +55,13 @@ customer-project/
 From the local customer project folder, build using the downloaded core:
 
 ```sh
-node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
+node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
 ```
 
 For a reproducible populated build, provide a prepared JSON source and its snapshot date:
 
 ```sh
-node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
+node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
 ```
 
 See [customer setup](docs/CUSTOMER_SETUP.md), [architecture](docs/ARCHITECTURE.md), [financial definitions](docs/FINANCIAL_BASIS.md) and [the example configuration](examples/customer-config.json).
@@ -95,3 +95,9 @@ The **repository** contains no customer records. A **saved report** contains the
 Repository access and SharePoint/OneDrive access are separate. Use stable source links and documented setup paths rather than one person's local directory.
 
 The existing repository's GPL v3 license is retained. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+
+## Mandatory inactive-row cleansing
+
+From core v0.2.0, source preparation always removes software rows with `Support Status = Inactive` and hardware rows with `Contract Status Type = Inactive`, ignoring case and surrounding whitespace. This runs in CLI builds and browser workbook uploads, before configurable customer rules; replacement rules cannot reactivate a removed source row. A row changed to Inactive by a customer rule is also removed.
+
+Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.

@@ -45,3 +45,37 @@ test('source builds require snapshot date and escape script-closing text',()=>{
  try{const source=path.join(tmp,'source.json'),input=fixture();input['sw-details'][1][4]='</script><script>throw Error("unexpected")</script>';fs.writeFileSync(source,JSON.stringify(input));assert.throws(()=>build({source,output:path.join(tmp,'x.html')}),/snapshot/);build({source,snapshot:'2026-01-31',output:path.join(tmp,'x.html')});const html=fs.readFileSync(path.join(tmp,'x.html'),'utf8');assert(!html.includes('</script><script>throw Error("unexpected")'));
  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
+
+
+test('mandatory inactive cleansing covers both sheets, ignores case/whitespace and cannot be overridden',()=>{
+ const input=fixture(),sw=input['sw-details'],hw=input['hw-details'];
+ sw[3][11]='  iNaCtIvE  ';hw.push([...hw[1]]);hw[2][31]=' INACTIVE ';hw[2][0]='Historical hardware entity';
+ sw.push([...sw[1]]);sw[4][4]='Later active entity';
+ const before=JSON.stringify(input);
+ const prepared=R.prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['inactive'],value:'Active'}]});
+ assert.equal(prepared.counts['sw-details'].input,4);assert.equal(prepared.counts['sw-details'].retained,3);assert.equal(prepared.counts['sw-details'].excludedInactive,1);
+ assert.equal(prepared.counts['hw-details'].excludedInactive,1);assert.equal(prepared.source['hw-details'].length,2);
+ assert.deepEqual(prepared.origins['sw-details'].map(x=>x.row),[2,3,5]);
+ assert.equal(JSON.stringify(input),before);
+ const again=R.prepare(prepared.source);assert.deepEqual(again.source,prepared.source);assert.equal(again.counts['sw-details'].excludedInactive,0);
+ const defaults=R.prepare(input);assert.deepEqual(defaults.source,prepared.source);
+});
+
+test('cleansing also removes rows made inactive by a customer rule and preserves unrelated statuses',()=>{
+ const input=fixture();input['sw-details'][1][11]='Pending';
+ const prepared=R.prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['Active'],value:'Inactive'}]});
+ assert.equal(prepared.source['sw-details'].length,2);assert.equal(prepared.source['sw-details'][1][11],'Pending');assert.equal(prepared.counts['sw-details'].excludedInactive,2);
+});
+
+test('populated builds embed only cleansed rows and retain original evidence pointers',()=>{
+ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'exec-dashboard-cleanse-'));
+ try{
+  const input=fixture(),source=path.join(tmp,'input.json'),output=path.join(tmp,'report.html');
+  fs.writeFileSync(source,JSON.stringify(input));const result=build({source,snapshot:'2026-01-31',output});
+  const html=fs.readFileSync(output,'utf8');
+  const embedded=JSON.parse(html.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);
+  assert.equal(embedded['sw-details'].length,3);assert(!JSON.stringify(embedded).includes('Other Example Entity'));
+  assert.equal(result.sourceRecords['sw-details'].excludedInactive,1);assert.equal(result.sourceRecords['sw-details'].retained,2);
+  assert.equal(JSON.stringify(input),fs.readFileSync(source,'utf8'));
+ }finally{fs.rmSync(tmp,{recursive:true,force:true});}
+});

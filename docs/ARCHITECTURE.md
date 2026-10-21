@@ -11,7 +11,7 @@ The existing multi-customer release coordinator, fixed source paths, historical 
 1. Load and validate customer configuration, defaulting to config/default.json.
 2. Load a prepared source JSON file, or create a header-only empty source.
 3. Validate the column layout against schemas/eix-columns.json.
-4. Apply declarative source preparation and retain original row numbers.
+4. Remove Inactive software/hardware rows, apply declarative customer rules and retain original row numbers. The same mandatory cleansing runs on browser uploads.
 5. Assemble static geography, generic code, neutral CSS, configuration and optional external CSS/extension into a self-contained HTML report.
 6. Write an adjacent manifest identifying the core version, build ID, source snapshot and content hashes.
 
@@ -35,7 +35,7 @@ Identical source/configuration/code and output options yield identical HTML. Bui
 
 ## Customer extension API
 
-An external `extensionFile` may declare `const DashboardExtension = { transformRecords(records, context) { ... } }`. It executes within the report whenever records are normalized, including after workbook refresh. Context contains `source`, `config` and `options`; `options.includeInactive` distinguishes the complete entity directory from Active financial reporting.
+An external `extensionFile` may declare `const DashboardExtension = { transformRecords(records, context) { ... } }`. It executes within the report whenever records are normalized, including after workbook refresh. Context contains `source`, `config` and `options`; `options.includeInactive` distinguishes all retained statuses in the entity directory from Active financial reporting; source Inactive rows have already been removed and are never supplied to extensions.
 
 The hook must be deterministic, synchronous and return a record array. Preserve record IDs, sheet names, original row pointers, raw financial fields and status scope. Add flags or additional derived fields rather than changing historical source facts. Validate contract calculations with examples in the local customer project. Extensions are trusted executable code, not a sandbox, and are embedded in saved customer reports. The core performs syntax checking; extension-specific semantics require customer tests.
 

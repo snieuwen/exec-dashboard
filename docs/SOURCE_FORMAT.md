@@ -30,3 +30,9 @@ For browser refresh, continue supplying the processed .xlsx source. A quick uplo
 ## Limits
 
 The embedded reader accepts unencrypted .xlsx workbooks up to 50 MB and enforces ZIP expansion/row limits. It does not calculate Excel formulas, run macros, read arbitrary file types or adapt new schemas. An encrypted workbook must be prepared separately through an authorized workflow.
+
+## Mandatory inactive-row cleansing
+
+From core v0.2.0, source preparation always removes software rows with `Support Status = Inactive` and hardware rows with `Contract Status Type = Inactive`, ignoring case and surrounding whitespace. This runs in CLI builds and browser workbook uploads, before configurable customer rules; replacement rules cannot reactivate a removed source row. A row changed to Inactive by a customer rule is also removed.
+
+Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.

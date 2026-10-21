@@ -10,18 +10,23 @@ const DashboardRules=(()=>{
    const index=name=>{const i=headers.indexOf(name);if(i<0)throw Error('Unknown cleansing column: '+name);return i;};
    const rules=(config.cleansing||[]).filter(rule=>!rule.sheet||rule.sheet===sheet);
    const operations=rules.map(rule=>({...rule,columnIndex:index(rule.column)}));
-   source[sheet]=[headers.slice()];origins[sheet]=[];let dropped=0,changed=0;
+   source[sheet]=[headers.slice()];origins[sheet]=[];let dropped=0,changed=0,excludedInactive=0;
+   const statusIndex=index(sheet==='sw-details'?'Support Status':'Contract Status Type');
    matrix.slice(1).forEach((record,i)=>{
     const row=Array.from({length:headers.length},(_,j)=>record?.[j]??null);let excluded=false;
+    // Mandatory scope cleansing precedes customer transformations: an inactive row cannot be reactivated by a replacement rule.
+    if(fold(row[statusIndex])==='inactive'){dropped++;excludedInactive++;return;}
     for(const rule of operations){
      const matches=rule.values?rule.values.some(value=>fold(value)===fold(row[rule.columnIndex])):rule.contains!==undefined?fold(row[rule.columnIndex]).includes(fold(rule.contains)):true;
      if(rule.action==='exclude'&&matches){excluded=true;break;}
      if(rule.action==='trim'&&typeof row[rule.columnIndex]==='string'){const before=row[rule.columnIndex];row[rule.columnIndex]=before.trim();if(before!==row[rule.columnIndex])changed++;}
      if(rule.action==='replace'&&matches){row[rule.columnIndex]=rule.value;changed++;}
     }
-    if(excluded){dropped++;return;}source[sheet].push(row);origins[sheet].push({sheet,row:i+2});
+    if(excluded){dropped++;return;}
+    if(fold(row[statusIndex])==='inactive'){dropped++;excludedInactive++;return;}
+    source[sheet].push(row);origins[sheet].push({sheet,row:i+2});
    });
-   counts[sheet]={input:matrix.length-1,retained:source[sheet].length-1,excluded:dropped,changed};
+   counts[sheet]={input:matrix.length-1,retained:source[sheet].length-1,excluded:dropped,excludedInactive,changed};
   }
   return {source,origins,counts,summary:JSON.stringify(counts)};
  }

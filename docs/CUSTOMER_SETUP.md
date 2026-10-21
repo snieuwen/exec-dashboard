@@ -19,7 +19,7 @@ customer-project/
   AGENTS.md
   CORE_VERSION.txt
   _core/
-    exec-dashboard-0.1.0/
+    exec-dashboard-0.2.0/
   customer.json
   customer.css             # Optional
   extension.js             # Optional
@@ -32,15 +32,15 @@ The `_core` folder holds an unchanged copy of the generic functionality. Custome
 
 ## 2. Download a fixed core version
 
-While signed in to GitHub, open [v0.1.0](https://github.com/snieuwen/exec-dashboard/tree/v0.1.0), choose **Code → Download ZIP**, and extract it under `_core/`. The extracted folder should be `_core/exec-dashboard-0.1.0/`.
+While signed in to GitHub, open [v0.2.0](https://github.com/snieuwen/exec-dashboard/tree/v0.2.0), choose **Code → Download ZIP**, and extract it under `_core/`. The extracted folder should be `_core/exec-dashboard-0.2.0/`.
 
-Write `v0.1.0` in `CORE_VERSION.txt`. For additional traceability, record its commit `571fea5ff6b31bcb4afde6d231cbbd25032c89db` as well.
+Write `v0.2.0` in `CORE_VERSION.txt`. For additional traceability, record the commit resolved by the immutable release tag as well.
 
 The repository URL alone does not install or mount the shared code. Codex needs this downloaded copy to run the builder locally. Use a fixed release rather than the moving main branch for formal reports. The instructions on main are the current setup guide; older release archives retain their original documentation.
 
 ## 3. Set up customer files
 
-Copy `_core/exec-dashboard-0.1.0/examples/customer-config.json` to `customer.json` in the local project root. Set the customer label, title, reporting currency and source-scope statement. Keep source references and contract interpretations in `docs/`.
+Copy `_core/exec-dashboard-0.2.0/examples/customer-config.json` to `customer.json` in the local project root. Set the customer label, title, reporting currency and source-scope statement. Keep source references and contract interpretations in `docs/`.
 
 Document financial assumptions before enabling them. Defaults exclude unconfirmed hardware fees from annual totals and retain order currency for acquisition values. Supported cleansing actions are trim, exclude and replace. Columns use exact source header names; rules may target one sheet. Matching ignores case and surrounding spaces.
 
@@ -74,7 +74,7 @@ These instructions describe the local customer workspace for new Codex chats. Th
 From the local customer project root, run:
 
 ```sh
-node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
+node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
 ```
 
 Open `outputs/dashboard.html` in Chrome or Edge. Choose **Open Source data file** to load a processed `.xlsx` workbook containing `sw-details` and `hw-details`. Use **Save report** to preserve the loaded source and settings in a new local HTML file.
@@ -82,7 +82,7 @@ Open `outputs/dashboard.html` in Chrome or Edge. Choose **Open Source data file*
 For a reproducible populated build, supply a prepared JSON source and its snapshot date:
 
 ```sh
-node _core/exec-dashboard-0.1.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
+node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
 ```
 
 The adjacent manifest records source/configuration fingerprints and core version. Archive it with the report and the exact input file version. See the [source guide](SOURCE_FORMAT.md) for optional workbook preparation; Python is not required to build an empty report and load a processed workbook through the browser.
@@ -113,3 +113,9 @@ Reusable functionality is maintained centrally. Customer settings and extensions
 Share the local project folder through the agreed OneDrive/SharePoint location or another approved file-transfer method. Include its instructions, version record, configuration, extensions and project knowledge. Source-file permissions remain separate; populated reports contain the entire loaded source, including records hidden by filters.
 
 The recipient opens the folder as a local Codex project. They can use the included core copy or download the same fixed release with their own GitHub access. A shared folder is useful for exchanging customer files but is not required to consume the generic core.
+
+## Mandatory inactive-row cleansing
+
+From core v0.2.0, source preparation always removes software rows with `Support Status = Inactive` and hardware rows with `Contract Status Type = Inactive`, ignoring case and surrounding whitespace. This runs in CLI builds and browser workbook uploads, before configurable customer rules; replacement rules cannot reactivate a removed source row. A row changed to Inactive by a customer rule is also removed.
+
+Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.

@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-21
+
+- Always remove Inactive software and hardware rows during shared source preparation, including CLI builds and browser uploads; the policy cannot be disabled by customer cleansing configuration.
+- Keep original input files and surviving source-row lineage unchanged. Record mandatory removals separately as excludedInactive.
+- Remove inactive data from embedded reports, entity directories, exports and saved copies; clarify retained source scope in the UI and guides.
+- Add regression tests for both sheet types, status casing/whitespace, attempted reactivation, post-rule inactivity, saved-source contents and idempotent cleansing.
+
 
 - Rewrote onboarding around local Codex customer projects using a downloaded, fixed shared-core release. Removed customer repository and package-manager requirements; added local project instructions, upgrade and handover guidance. Dashboard functionality is unchanged.
 
