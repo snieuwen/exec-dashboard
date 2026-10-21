@@ -46,3 +46,7 @@ Contract notes are plain text rendered under Data & assumptions. They do not exe
 Each local Codex project downloads a fixed release archive into a versioned folder under `_core/` and records it in CORE_VERSION.txt. Customer configuration and extensions live alongside the unchanged core copy. Invoke the builder directly with Node.js; normal customer use requires no Git repository or package installation.
 
 Private repository access is required to download or update the core. After download, builds and reports work locally without repository access. A repository URL alone does not provide executable files. Updates are deliberate: retain the old core, test a new version with the same inputs and then update the version record.
+
+## ULA quantity presentation
+
+The shared model exposes licenseEntitlement(record), derived only from software License Level and the original quantity. The shared ReportQuantities renderer separates these records in quantity mode, reusing the existing pivot classes, expand/collapse actions and source-detail hooks. Financial mode bypasses this split. Customers consume this behavior by upgrading the unchanged core release; no customer-specific ULA renderer is required.

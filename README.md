@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.2.0** includes mandatory inactive-row cleansing, building on the independently versioned generic core.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.3.0** adds a separate ULA products quantity pivot above regular quantities, with mandatory inactive-row cleansing retained.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -23,6 +23,7 @@ The source layout is defined in [`schemas/eix-columns.json`](schemas/eix-columns
 - About/scope page and product glossary.
 - Executive overview, investment versus recurring fee measures, and renewal timeline.
 - Portfolio drilldowns with financial and quantity views and original source evidence.
+- Separate ULA products quantity table, grouped by order, with Unlimited and Capped ULA displays based on License Level.
 - Worldwide purchasing-country and entity footprint.
 - Offline interactive estate atlas with world and regional focus views.
 - Recent purchases, hardware aging and contract renewal grouping.
@@ -43,7 +44,7 @@ customer-project/
   AGENTS.md               # Local instructions for Codex
   CORE_VERSION.txt        # Exact shared core release used
   _core/
-    exec-dashboard-0.2.0/ # Downloaded core; keep unchanged
+    exec-dashboard-0.3.0/ # Downloaded core; keep unchanged
   customer.json           # Settings and cleansing rules
   customer.css            # Optional customer theme
   extension.js            # Optional trusted customer code
@@ -55,13 +56,13 @@ customer-project/
 From the local customer project folder, build using the downloaded core:
 
 ```sh
-node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
+node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
 ```
 
 For a reproducible populated build, provide a prepared JSON source and its snapshot date:
 
 ```sh
-node _core/exec-dashboard-0.2.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
+node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
 ```
 
 See [customer setup](docs/CUSTOMER_SETUP.md), [architecture](docs/ARCHITECTURE.md), [financial definitions](docs/FINANCIAL_BASIS.md) and [the example configuration](examples/customer-config.json).

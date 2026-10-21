@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-10-21
+
+- Read original software License Level and License Type into the shared model; classify ULA and Capped ULA from License Level only.
+- Place ULA products above regular quantity tables with the existing pivot appearance and controls: order/entity -> product -> original evidence. Single orders open by default.
+- Display expected ULA quantity 1 as infinity/Unlimited and positive Capped ULA quantities as Max. N. Keep both forms out of regular quantity totals and never sum capped limits across records or orders.
+- Flag unexpected ULA quantities, invalid capped limits, unknown ULA-like levels and missing order numbers for review. Preserve raw source values and existing financial calculations.
+- Add licence-form and display-quantity evidence columns to CSV exports, with regression coverage for classification, quantities, grouping, controls, source upload, saved reports and mobile layout.
+
 ## 0.2.0 — 2026-10-21
 
 - Always remove Inactive software and hardware rows during shared source preparation, including CLI builds and browser uploads; the policy cannot be disabled by customer cleansing configuration.

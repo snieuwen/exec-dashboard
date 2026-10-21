@@ -44,6 +44,20 @@ const Estate = (() => {
     if(/upgrade/i.test(p))return 'Upgrade kits';
     return 'Other components and accessories';
   }
+  // Licence forms are explicit source conventions, never inferred from quantity alone.
+  function licenseEntitlement(r){
+    const raw=text(r.licenseLevel),level=raw.trim().toUpperCase().replace(/[\s_\-–—]+/g,' ');
+    const regular={kind:'regular',label:'Regular',source:raw,display:numeric(r.quantity)===null?'Not supplied':String(r.quantity),limit:null,unlimited:false,issue:''};
+    if(r.sheet!=='sw-details')return regular;
+    const capped=['C ULA','CULA','CAPPED ULA','ULA CAPPED','CAPPED UNLIMITED LICENSE AGREEMENT','CAPPED UNLIMITED LICENCE AGREEMENT','CAPPED UNLIMITED LICENSE AGREEMENT (C ULA)','UNLIMITED LICENSE AGREEMENT (C ULA)'];
+    const unlimited=['ULA','UNLIMITED LICENSE AGREEMENT','UNLIMITED LICENCE AGREEMENT','UNLIMITED LICENSE AGREEMENT (ULA)','UNLIMITED LICENCE AGREEMENT (ULA)'];
+    let kind=capped.includes(level)?'capped':unlimited.includes(level)?'unlimited':/\bULA\b|UNLIMITED LICEN[CS]E/.test(level)&&!['NO ULA','NON ULA','NOT ULA'].includes(level)?'review':'regular';
+    if(kind==='regular')return regular;
+    const label=kind==='capped'?'Capped ULA':kind==='unlimited'?'ULA':'ULA — review';
+    const valid=kind==='unlimited'?r.quantity===1:kind==='capped'?numeric(r.quantity)!==null&&r.quantity>0:false;
+    const issue=kind==='review'?'Unrecognised ULA License Level':valid?'':kind==='capped'?'Capped ULA quantity missing or not positive':'ULA quantity is not the expected placeholder 1';
+    return {kind,label,source:raw,display:valid?(kind==='unlimited'?'∞ Unlimited':'Max. '+r.quantity):'Review quantity',limit:kind==='capped'&&valid?r.quantity:null,unlimited:kind==='unlimited'&&valid,issue};
+  }
   function normalize(source,options={}) {
     for(const s of ['sw-details','hw-details']){
       if(options.allowMissingSheets&&!source[s]?.length)continue;
@@ -59,12 +73,14 @@ const Estate = (() => {
         const cloud=sw&&r[12]==='Cloud',technologySub=sw&&!cloud&&r[18]==='Java SE - Subscription';
         const [area,segment]=sw?swCategory(r):[areas[3],r[11]==='Exadata Database Machine'?'Exadata hardware':r[11]==='Zero Data Loss Recovery Appliance'?'Recovery Appliance hardware':'Other hardware'];
         const item={id:`${sheet}!${index+2}`,sheet,row:index+2,status:text(r[sw?11:31]),area,segment,environment:cloud?'Cloud':'On-prem',kind:sw?(cloud?'Subscription':technologySub?'Technology subscription':'Software licence'):'Hardware',
-          entity:text(r[sw?4:0]),party:text(r[sw?60:37]),country:text(r[sw?10:1])||'Unassigned',product:text(r[sw?18:4]),family:text(r[sw?16:11]),part:text(r[sw?22:5]),metric:text(r[sw?23:6])||'Unspecified',quantity:numeric(r[sw?24:17]),term:text(r[sw?26:7]),
+          entity:text(r[sw?4:0]),party:text(r[sw?60:37]),country:text(r[sw?10:1])||'Unassigned',product:text(r[sw?18:4]),family:text(r[sw?16:11]),part:text(r[sw?22:5]),metric:text(r[sw?23:6])||'Unspecified',quantity:numeric(r[sw?24:17]),term:text(r[sw?26:7]),licenseLevel:text(r[sw?25:28]),licenseType:text(r[sw?63:27]),agreement:sw?text(r[8]):'',
           purchase:sw&&!cloud&&!technologySub?numeric(r[36]):null,support:sw&&!cloud&&!technologySub?numeric(r[40]):null,subscription:cloud||technologySub?numeric(r[40]):null,hardware:!sw?numeric(r[55]):null,
           start:date(r[sw?30:32]),end:date(r[sw?31:33]),orderDate:date(r[sw?28:21]),order:text(r[sw?27:19]),contract:text(r[sw?32:53])||(cloud?text(r[47]):''),csi:text(r[sw?34:52]),instance:text(r[sw?35:51]),subId:cloud?text(r[44]):'',plan:cloud?text(r[45]):'',operation:cloud?text(r[61]):'',pricing:cloud?text(r[68]):'',
           originalPurchase:sw&&!cloud?numeric(r[37]):null,purchaseCurrency:sw?text(r[42]):'',originalAnnual:sw?numeric(r[41]):null,supportCurrency:sw?text(r[43]):'',hwPurchase:!sw?numeric(r[29]):null,hwPurchaseSource:!sw?numeric(r[29]):null,hwPurchaseMissing:!sw&&numeric(r[29])===null,hwOrderCurrency:!sw?text(r[62]):'',hwSupportCurrency:!sw&&numeric(r[55])!==null?'USD':'',flags:[]};
         item.annualSupport=sw?item.support:item.hardware;
         item.productGroup=sw?(item.family||item.segment):hardwareGroup(item.product);
+        const entitlement=licenseEntitlement(item);if(entitlement.issue)item.flags.push(entitlement.issue);
+        if(entitlement.kind!=='regular'&&!item.order)item.flags.push('ULA order number missing: source rows kept separate');
         if(item.country==='Unassigned')item.flags.push('Country missing');
         if(!item.contract)item.flags.push('Contract number missing');
         if(item.contract.includes(';'))item.flags.push('Multiple contract IDs: fee allocation needed');
@@ -229,6 +245,6 @@ const Estate = (() => {
     if(review==='missing')selected=selected.filter(r=>!r.end);
     return {base,missing,aged,bands,selected:[...selected].sort((a,b)=>(a.orderDate||'9999').localeCompare(b.orderDate||'9999')||a.id.localeCompare(b.id))};
   }
-  return {configure,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
+  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
 })();
 if(typeof module!=='undefined')module.exports=Estate;

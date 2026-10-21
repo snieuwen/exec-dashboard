@@ -79,3 +79,43 @@ test('populated builds embed only cleansed rows and retain original evidence poi
   assert.equal(JSON.stringify(input),fs.readFileSync(source,'utf8'));
  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
+
+
+test('ULA interpretation uses License Level, preserves source quantities and checks malformed limits',()=>{
+ const {ulaFixture}=require('./helpers.cjs'),input=ulaFixture(),before=JSON.stringify(input),rows=E.normalize(input),q=require('../src/report-quantities.js');
+ const unlimited=rows.find(r=>r.order==='TEST-ULA-ORDER'),capped=rows.find(r=>r.order==='TEST-CAPPED-ORDER'),regular=rows.find(r=>r.order==='TEST-REGULAR-ONE');
+ assert.equal(unlimited.licenseLevel,'UNLIMITED LICENSE AGREEMENT (ULA)');assert.equal(unlimited.quantity,1);
+ assert.equal(E.licenseEntitlement(unlimited).display,'∞ Unlimited');assert.equal(E.licenseEntitlement(capped).label,'Capped ULA');assert.equal(E.licenseEntitlement(capped).limit,250);
+ assert.equal(E.licenseEntitlement(regular).kind,'regular');assert.equal(q.summary([regular]).quantity,1);
+ assert.equal(q.summary([unlimited,unlimited]).quantity,null);assert.equal(q.summary([capped,capped]).quantity,null);
+ assert.equal(E.licenseEntitlement({...regular,licenseType:'ULA'}).kind,'regular');
+ assert.equal(E.licenseEntitlement({...capped,quantity:1}).display,'Max. 1');
+ for(const quantity of [null,0,-1])assert(E.licenseEntitlement({...capped,quantity}).issue);
+ assert(E.licenseEntitlement({...unlimited,quantity:2}).issue);
+ assert.equal(E.licenseEntitlement({...unlimited,licenseLevel:'ULA SPECIAL'}).kind,'review');
+ assert.equal(E.licenseEntitlement({...unlimited,licenseLevel:'NO ULA'}).kind,'regular');
+ assert.equal(E.licenseEntitlement({...unlimited,sheet:'hw-details'}).kind,'regular');
+ assert.equal(JSON.stringify(input),before);
+});
+
+test('quantity renderer separates ULA orders above regular quantities without changing financial rendering',()=>{
+ const q=require('../src/report-quantities.js'),{ulaFixture}=require('./helpers.cjs');const rows=E.normalize(ulaFixture()),view=q.create();
+ let html=view.render(rows,{areas:E.areas});
+ assert(html.includes('aria-label="ULA products"'));assert(html.indexOf('ula-quantity-table')<html.indexOf('regular-quantity-table'));
+ assert.equal((html.match(/data-ula-level="root"/g)||[]).length,1);assert.equal((html.match(/data-ula-level="order"/g)||[]).length,3);
+ assert(!html.includes('ULA Capped'));assert(!html.includes('Max. 500'));
+ const button={dataset:{quantityExpand:'all'}};view.action(button);html=view.render(rows,{areas:E.areas});
+ assert(html.includes('∞ Unlimited'));assert(html.includes('Max. 250'));assert(html.includes('Max. 100'));
+ const ula=html.split('class="data-table table pivot-table quantity-table ula-quantity-table"')[1].split('</table>')[0];
+ assert(!ula.includes('Example single licence'));
+ const normal=html.split('regular-quantity-table')[1];assert(!normal.includes('Example unlimited database'));assert(!normal.includes('Example capped database'));
+ const financial=view.render(rows,{areas:E.areas,financial:{heads:['Amount'],cells:()=>'<td>0</td>'}});assert(!financial.includes('ula-quantity-table'));assert(financial.includes('Example unlimited database'));
+ const onlyRegular=q.create().render(rows.filter(r=>!q.isUla(r)),{areas:E.areas});assert(!onlyRegular.includes('ula-quantity-table'));
+});
+
+test('ULA renderer keeps unknown orders, unlike metrics and differing capped quantities separate',()=>{
+ const q=require('../src/report-quantities.js'),base=E.normalize(require('./helpers.cjs').ulaFixture()).find(r=>r.order==='TEST-CAPPED-ORDER');
+ const rows=[{...base,id:'a',order:'',quantity:100},{...base,id:'b',order:'',quantity:200},{...base,id:'c',order:'ONE',quantity:100},{...base,id:'d',order:'ONE',quantity:200},{...base,id:'e',order:'ONE',metric:'Named User Plus',quantity:50}];
+ const view=q.create();view.action({dataset:{quantityExpand:'all'}});const html=view.render(rows,{areas:E.areas});
+ assert.equal((html.match(/data-ula-level="order"/g)||[]).length,3);assert(html.includes('Multiple limits — expand'));assert(html.includes('Named User Plus'));assert(!html.includes('Max. 300'));
+});

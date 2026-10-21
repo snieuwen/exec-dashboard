@@ -36,3 +36,9 @@ The embedded reader accepts unencrypted .xlsx workbooks up to 50 MB and enforces
 From core v0.2.0, source preparation always removes software rows with `Support Status = Inactive` and hardware rows with `Contract Status Type = Inactive`, ignoring case and surrounding whitespace. This runs in CLI builds and browser workbook uploads, before configurable customer rules; replacement rules cannot reactivate a removed source row. A row changed to Inactive by a customer rule is also removed.
 
 Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.
+
+## Software licence form
+
+Software `License Level` (column Z, zero-based index 25) drives ULA quantity interpretation. `License Type` is a separate source field retained for evidence and does not override License Level.
+
+Recognized Unlimited aliases include `ULA`, `UNLIMITED LICENSE AGREEMENT`, `UNLIMITED LICENCE AGREEMENT`, and either full name followed by `(ULA)`. Capped aliases include `C-ULA`, `CULA`, `Capped ULA`, `ULA Capped` and the explicit capped full-name variants listed in src/model.js. Matching ignores case, repeated whitespace and dash variants. The report label is always `Capped ULA`. Unrecognized ULA-like levels are separated for review rather than added to ordinary quantities; `NO ULA`, `NON ULA` and `NOT ULA` are not ULA indicators. Source values are never rewritten.

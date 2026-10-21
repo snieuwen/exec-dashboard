@@ -25,4 +25,17 @@ function workbook(source){
  for(const [name,text]of Object.entries(entries)){const n=Buffer.from(name),data=Buffer.from(text),h=Buffer.alloc(30),c=Buffer.alloc(46),checksum=crc(data);h.writeUInt32LE(0x04034b50,0);h.writeUInt16LE(20,4);h.writeUInt32LE(checksum,14);h.writeUInt32LE(data.length,18);h.writeUInt32LE(data.length,22);h.writeUInt16LE(n.length,26);c.writeUInt32LE(0x02014b50,0);c.writeUInt16LE(20,4);c.writeUInt16LE(20,6);c.writeUInt32LE(checksum,16);c.writeUInt32LE(data.length,20);c.writeUInt32LE(data.length,24);c.writeUInt16LE(n.length,28);c.writeUInt32LE(offset,42);locals.push(h,n,data);central.push(c,n);offset+=h.length+n.length+data.length;}
  const directory=Buffer.concat(central),end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(names.length+3,8);end.writeUInt16LE(names.length+3,10);end.writeUInt32LE(directory.length,12);end.writeUInt32LE(offset,16);return Buffer.concat([...locals,directory,end]);
 }
-module.exports={fixture,workbook};
+function ulaFixture(){
+ const source=fixture(),base=source['sw-details'][1];
+ const add=(level,quantity,order,product,entity='Example Entity',metric='Processor')=>{
+  const row=[...base];row[4]=entity;row[18]=product;row[23]=metric;row[24]=quantity;row[25]=level;row[27]=order;row[36]=100;row[37]=80;row[40]=20;row[41]=16;row[63]='';source['sw-details'].push(row);
+ };
+ add('UNLIMITED LICENSE AGREEMENT (ULA)',1,'TEST-ULA-ORDER','Example unlimited database');
+ add('ULA',1,'TEST-ULA-ORDER','Example unlimited option');
+ add('C-ULA',250,'TEST-CAPPED-ORDER','Example capped database');
+ add('ULA Capped',250,'TEST-CAPPED-ORDER','Example capped database');
+ add('Capped ULA',100,'TEST-CAPPED-ORDER-2','Example capped database');
+ add('FULL USE (FUL)',1,'TEST-REGULAR-ONE','Example single licence');
+ return source;
+}
+module.exports={fixture,workbook,ulaFixture};
