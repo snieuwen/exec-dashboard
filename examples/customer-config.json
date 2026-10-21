@@ -5,12 +5,16 @@
   "reportCurrency": "USD",
   "scopeNote": "Confirm the agreed entity perimeter and reporting period in the customer project.",
   "financial": {
-    "hardwareSupportAnnual": false,
-    "hardwarePurchaseCurrency": "order",
+    "hardwareSupportAnnual": true,
+    "hardwarePurchaseCurrency": "support",
     "softwarePurchaseCurrency": "order"
   },
   "cleansing": [],
   "reviewEntities": [],
   "contractNotes": [],
-  "fxDefaults": { "rates": {}, "rateDates": {}, "rateOrigins": {} }
+  "fxDefaults": {
+    "rates": {},
+    "rateDates": {},
+    "rateOrigins": {}
+  }
 }

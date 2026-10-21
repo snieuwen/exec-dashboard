@@ -5,16 +5,36 @@ test('normalization selects active rows and keeps annual measures separate from 
  assert.equal(rows.length,3);assert.equal(a.purchase,1000);assert.equal(a.support,200);assert.equal(a.subscription,300);assert.equal(a.hardware,100);assert.equal(a.annual,600);
  assert.equal(E.normalize(fixture(),{includeInactive:true}).length,4);
 });
-test('generic defaults require hardware annual confirmation and retain recorded purchase currency',()=>{
- E.configure({});const rows=E.normalize(fixture()),hardware=rows.find(r=>r.kind==='Hardware');
- assert.equal(hardware.hardware,null);assert.equal(E.aggregate(rows).annual,500);assert.equal(E.hardwarePurchaseCurrency(hardware).currency,'EUR');
- assert(hardware.flags.some(f=>f.includes('annual basis unconfirmed')));
- E.configure({financial:{hardwarePurchaseCurrency:'support'}});assert.equal(E.hardwarePurchaseCurrency(hardware).currency,'USD');
+test('shared hardware policy applies without customer overrides and defeats legacy settings',()=>{
+ for(const config of [{},{financial:{hardwareSupportAnnual:false,hardwarePurchaseCurrency:'order'}}]){
+  E.configure(config);const rows=E.normalize(fixture()),hardware=rows.find(r=>r.kind==='Hardware');
+  assert.equal(hardware.hardware,100);assert.equal(E.aggregate(rows).annual,600);
+  assert.equal(E.hardwarePurchaseCurrency(hardware).currency,'USD');
+  assert.equal(hardware.hwOrderCurrency,'EUR');assert.equal(E.hardwareInvestment([hardware],'USD'),500);
+  assert(hardware.flags.some(f=>f.includes('shared reporting policy')));
+ }
 });
-test('blank hardware purchase is unavailable rather than zero and blocks complete total',()=>{
- E.configure({});const input=fixture();input['hw-details'][1][29]=null;const hardware=E.normalize(input).filter(r=>r.kind==='Hardware');
- assert.equal(hardware[0].hwPurchase,null);assert.equal(E.hardwareInvestment(hardware,'EUR',{},{}),null);assert.equal(E.hardwareInvestmentReview(hardware,'EUR').missingAmount,1);
+test('blank hardware purchases calculate as zero while raw blanks and missing flags survive',()=>{
+ E.configure({});for(const blank of [null,'','   ']){
+  const input=fixture();input['hw-details'][1][29]=blank;
+  const before=JSON.stringify(input),hw=E.normalize(input).filter(r=>r.kind==='Hardware');
+  assert.equal(hw[0].hwPurchase,0);assert.equal(hw[0].hwPurchaseSource,null);
+  assert.equal(hw[0].hwPurchaseMissing,true);assert.equal(hw[0].hwPurchaseAssumedZero,true);
+  const review=E.hardwareInvestmentReview(hw,'EUR');
+  assert.equal(review.total,0);assert.equal(review.complete,true);assert.equal(review.missingAmount,1);assert.equal(review.assumedZero,1);
+  assert.equal(JSON.stringify(input),before);
+ }
 });
+test('recorded zeros, invalid values, currency fallback and dated conversion stay distinct',()=>{
+ E.configure({});const input=fixture();input['hw-details'][1][29]=0;
+ let hw=E.normalize(input).filter(r=>r.kind==='Hardware');assert.equal(hw[0].hwPurchaseAssumedZero,false);assert.equal(hw[0].hwPurchaseMissing,false);
+ input['hw-details'][1][29]='invalid';hw=E.normalize(input).filter(r=>r.kind==='Hardware');assert.equal(E.hardwareInvestmentReview(hw,'USD').complete,false);
+ input['hw-details'][1][29]=500;input['hw-details'][1][55]=null;
+ hw=E.normalize(input).filter(r=>r.kind==='Hardware');assert.equal(E.hardwarePurchaseCurrency(hw[0]).currency,'EUR');assert.equal(E.hardwareInvestment(hw,'EUR'),500);assert.equal(E.hardwareInvestment(hw,'USD'),null);
+ assert.equal(E.hardwareInvestment(hw,'USD',{EUR:.8},{EUR:'2026-01-01'}),625);
+ input['hw-details'][1][55]=100;hw=E.normalize(input).filter(r=>r.kind==='Hardware');assert.equal(E.hardwareInvestment(hw,'EUR'),null);assert.equal(E.hardwareInvestment(hw,'EUR',{EUR:.8},{EUR:'2026-01-01'}),400);
+});
+
 test('dated FX is mandatory; same-currency source values do not require conversion',()=>{
  assert.equal(E.reportingAmount(100,80,'EUR','EUR',{},{}).amount,80);
  assert(Number.isNaN(E.reportingAmount(100,null,'','EUR',{EUR:.8},{}).amount));

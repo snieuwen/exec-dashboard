@@ -5,8 +5,8 @@
   "reportCurrency": "USD",
   "scopeNote": "Scope follows the supplied source. Confirm the customer perimeter before reporting.",
   "financial": {
-    "hardwareSupportAnnual": false,
-    "hardwarePurchaseCurrency": "order",
+    "hardwareSupportAnnual": true,
+    "hardwarePurchaseCurrency": "support",
     "softwarePurchaseCurrency": "order"
   },
   "cleansing": [],

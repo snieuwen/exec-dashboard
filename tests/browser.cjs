@@ -12,7 +12,7 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   await page.screenshot({path:path.join(qa,'generic-empty.png'),fullPage:true});
   const source=fixture();source['hw-details'].push([...source['hw-details'][1]]);source['hw-details'][2][31]=' InAcTiVe ';source['hw-details'][2][0]='Historical hardware entity';const xlsx=path.join(tmp,'Example_2026-01-31.xlsx');fs.writeFileSync(xlsx,workbook(source));
   await page.locator('#quick-source-file').setInputFiles(xlsx);await page.waitForFunction(()=>/Loaded|Source not loaded/.test(document.getElementById('quick-load-status').textContent));assert.match(await page.locator('#quick-load-status').innerText(),/Loaded 3 Active records/);
-  assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),500);
+  assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
   await page.screenshot({path:path.join(qa,'generic-overview.png'),fullPage:true});
   await page.locator('.nav [data-view="portfolio"]').click();await page.locator('[data-portfolio-mode="quantity"]').click();await page.locator('[data-quantity-expand="all"]').click();assert.equal(await page.locator('[data-quantity-level="line"]').count(),3);
   await page.locator('[data-portfolio-mode="financial"]').click();await page.locator('[data-quantity-expand="all"]').click();assert.equal(await page.locator('[data-quantity-level="line"]').count(),3);
@@ -21,7 +21,7 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   await page.locator('.nav [data-view="atlas"]').click();await page.locator('.atlas-map').waitFor();assert(await page.locator('.atlas-land').count()>20);await page.locator('.atlas-rank[data-atlas-country="276"]').click();assert.match(await page.locator('.atlas-spotlight').innerText(),/Germany/);
   await page.screenshot({path:path.join(qa,'generic-atlas.png'),fullPage:true});
   await page.locator('.nav [data-view="data"]').click();assert(!(await page.locator('#main').innerText()).includes('${esc('));await page.locator('#fx-currency').selectOption('EUR');await page.locator('#rate').fill('0.8');await page.locator('#rate-date').fill('2026-01-31');await page.locator('#apply-rate').click();await page.locator('.nav [data-view="overview"]').click();await page.locator('#currency').selectOption('EUR');
-  await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),400);
+  await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
   const [saved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const savedPath=path.join(tmp,'saved.html');await saved.saveAs(savedPath);const savedHtml=fs.readFileSync(savedPath,'utf8');const cleanedEmbedded=JSON.parse(savedHtml.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(cleanedEmbedded['sw-details'].length,3);assert.equal(cleanedEmbedded['hw-details'].length,2);assert(!JSON.stringify(cleanedEmbedded).includes('Historical hardware entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Other Example Entity'));const p2=await browser.newPage();p2.on('pageerror',e=>errors.push(e.message));await p2.goto(pathToFileURL(savedPath).href);await p2.locator('.report-notice').waitFor();assert.equal(await p2.locator('#currency').inputValue(),'EUR');await p2.close();
   await page.setViewportSize({width:390,height:844});for(const view of ['overview','atlas','data']){await page.locator('.nav [data-view="'+view+'"]').click();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),view+' mobile overflow');}
   await page.screenshot({path:path.join(qa,'generic-mobile.png'),fullPage:true});
@@ -29,6 +29,24 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   const config=JSON.parse(fs.readFileSync(path.resolve('config/default.json'),'utf8'));config.label='Example workspace';config.financial.hardwareSupportAnnual=true;config.cleansing=[{sheet:'sw-details',action:'exclude',column:source['sw-details'][0][11],values:['Inactive']}];config.contractNotes=[{title:'Example note',text:'<script>unexpected()</script>',source:'Example reference',effectiveFrom:'2026-01-01'}];config.extensionFile='extension.js';fs.writeFileSync(path.join(tmp,'extension.js'),'const DashboardExtension={transformRecords(records){return records.map(r=>({...r,flags:[...r.flags,"CUSTOM_TEST"]}));}};');fs.writeFileSync(path.join(tmp,'customer.json'),JSON.stringify(config));const customerOutput=path.join(tmp,'customer.html');build({config:path.join(tmp,'customer.json'),output:customerOutput});
   await page.setViewportSize({width:1512,height:1100});await page.goto(pathToFileURL(customerOutput).href);await page.locator('#quick-source-file').setInputFiles(xlsx);await page.waitForFunction(()=>/Loaded|Source not loaded/.test(document.getElementById('quick-load-status').textContent));assert.match(await page.locator('#quick-load-status').innerText(),/Loaded 3 Active records/);assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);await page.locator('.nav [data-view="data"]').click();assert.match(await page.locator('#main').innerText(),/CUSTOM_TEST/);assert.match(await page.locator('#main').innerText(),/<script>unexpected\(\)<\/script>/);assert.equal(await page.locator('#main script').count(),0);assert.equal(await page.locator('#main').getByText('Other Example Entity',{exact:true}).count(),0);
   const [customerSaved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const customerSavedPath=path.join(tmp,'customer-saved.html');await customerSaved.saveAs(customerSavedPath);await page.goto(pathToFileURL(customerSavedPath).href);await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
+  // Legacy customer settings cannot disable shared hardware policy.
+  config.financial.hardwareSupportAnnual=false;config.financial.hardwarePurchaseCurrency='order';
+  fs.writeFileSync(path.join(tmp,'customer.json'),JSON.stringify(config));build({config:path.join(tmp,'customer.json'),output:customerOutput});
+  const blankSource=fixture();blankSource['hw-details'][1][29]=null;
+  const blankFile=path.join(tmp,'Blank_2026-01-31.xlsx');fs.writeFileSync(blankFile,workbook(blankSource));
+  await page.goto(pathToFileURL(customerOutput).href);await page.locator('#quick-source-file').setInputFiles(blankFile);
+  await page.waitForFunction(()=>/Loaded/.test(document.getElementById('quick-load-status').textContent));
+  assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
+  await page.locator('.nav [data-view="portfolio"]').click();await page.locator('[data-quantity-expand="all"]').click();
+  await page.locator('[data-record="hw-details!2"]').first().click();await page.locator('#detail[open]').waitFor();
+  assert.match(await page.locator('#detail-body').innerText(),/Source purchase amount is blank; calculated as zero/);await page.locator('#close-detail').click();
+  const [blankCsv]=await Promise.all([page.waitForEvent('download'),page.locator('#export').click()]);
+  const blankCsvPath=path.join(tmp,'blank.csv');await blankCsv.saveAs(blankCsvPath);assert.match(fs.readFileSync(blankCsvPath,'utf8'),/Hardware_purchase_blank_as_zero/);
+  const [blankSaved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);
+  const blankSavedPath=path.join(tmp,'blank-saved.html');await blankSaved.saveAs(blankSavedPath);
+  assert.equal(JSON.parse(fs.readFileSync(blankSavedPath,'utf8').match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1])['hw-details'][1][29],null);
+  await page.goto(pathToFileURL(blankSavedPath).href);await page.locator('.nav [data-view="overview"]').click();
+  assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
   // ULA and Capped ULA use the same pivot controls, evidence and source refresh path.
   const ulaSource=ulaFixture(),ulaFile=path.join(tmp,'ULA_2026-01-31.xlsx');fs.writeFileSync(ulaFile,workbook(ulaSource));
   await page.goto(pathToFileURL(output).href);await page.locator('#quick-source-file').setInputFiles(ulaFile);

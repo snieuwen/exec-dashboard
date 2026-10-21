@@ -93,8 +93,8 @@ The adjacent manifest records source/configuration fingerprints and core version
 - label/title: display text, escaped before use in HTML.
 - reportCurrency: three-letter ISO code supported by the dashboard currency selector.
 - scopeNote: the customer perimeter and scope caveats.
-- financial.hardwareSupportAnnual: explicit confirmation that the hardware support field represents annual fees.
-- financial.hardwarePurchaseCurrency: order by default; support enables an explicit assumption.
+- financial.hardwareSupportAnnual: retained for compatibility; annual hardware support treatment is mandatory.
+- financial.hardwarePurchaseCurrency: retained for compatibility; same-row support currency preference with order fallback is mandatory.
 - financial.softwarePurchaseCurrency: order by default; support enables an explicit assumption.
 - cleansing: ordered declarative source transformations, rerun on browser uploads.
 - reviewEntities: exact entity names requiring review; these are flags, not exclusions.

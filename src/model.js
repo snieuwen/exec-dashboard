@@ -1,7 +1,8 @@
 /* Shared data model for the HTML report and its build-time verification. */
 const Estate = (() => {
   let config={};
-  function configure(value={}){config=value;}
+  // Mandatory shared hardware policy, including for legacy customer configurations.
+  function configure(value={}){config={...value,financial:{...value.financial,hardwareSupportAnnual:true,hardwarePurchaseCurrency:"support"}};}
   const areas = ['Technology software','Applications software','Appliance software','Hardware','OCI Universal Credits','SaaS Subscriptions','Learning Credits','Unclassified — review'];
   const day = 86400000;
   const numeric = x => typeof x === 'number' && Number.isFinite(x) ? x : null;
@@ -76,7 +77,7 @@ const Estate = (() => {
           entity:text(r[sw?4:0]),party:text(r[sw?60:37]),country:text(r[sw?10:1])||'Unassigned',product:text(r[sw?18:4]),family:text(r[sw?16:11]),part:text(r[sw?22:5]),metric:text(r[sw?23:6])||'Unspecified',quantity:numeric(r[sw?24:17]),term:text(r[sw?26:7]),licenseLevel:text(r[sw?25:28]),licenseType:text(r[sw?63:27]),agreement:sw?text(r[8]):'',
           purchase:sw&&!cloud&&!technologySub?numeric(r[36]):null,support:sw&&!cloud&&!technologySub?numeric(r[40]):null,subscription:cloud||technologySub?numeric(r[40]):null,hardware:!sw?numeric(r[55]):null,
           start:date(r[sw?30:32]),end:date(r[sw?31:33]),orderDate:date(r[sw?28:21]),order:text(r[sw?27:19]),contract:text(r[sw?32:53])||(cloud?text(r[47]):''),csi:text(r[sw?34:52]),instance:text(r[sw?35:51]),subId:cloud?text(r[44]):'',plan:cloud?text(r[45]):'',operation:cloud?text(r[61]):'',pricing:cloud?text(r[68]):'',
-          originalPurchase:sw&&!cloud?numeric(r[37]):null,purchaseCurrency:sw?text(r[42]):'',originalAnnual:sw?numeric(r[41]):null,supportCurrency:sw?text(r[43]):'',hwPurchase:!sw?numeric(r[29]):null,hwPurchaseSource:!sw?numeric(r[29]):null,hwPurchaseMissing:!sw&&numeric(r[29])===null,hwOrderCurrency:!sw?text(r[62]):'',hwSupportCurrency:!sw&&numeric(r[55])!==null?'USD':'',flags:[]};
+          originalPurchase:sw&&!cloud?numeric(r[37]):null,purchaseCurrency:sw?text(r[42]):'',originalAnnual:sw?numeric(r[41]):null,supportCurrency:sw?text(r[43]):'',hwPurchase:!sw?(r[29]==null||String(r[29]).trim()===''?0:numeric(r[29])):null,hwPurchaseSource:!sw?numeric(r[29]):null,hwPurchaseMissing:!sw&&numeric(r[29])===null,hwPurchaseAssumedZero:!sw&&(r[29]==null||String(r[29]).trim()===''),hwOrderCurrency:!sw?text(r[62]):'',hwSupportCurrency:!sw&&numeric(r[55])!==null?'USD':'',flags:[]};
         item.annualSupport=sw?item.support:item.hardware;
         item.productGroup=sw?(item.family||item.segment):hardwareGroup(item.product);
         const entitlement=licenseEntitlement(item);if(entitlement.issue)item.flags.push(entitlement.issue);
@@ -88,9 +89,9 @@ const Estate = (() => {
         if((config.reviewEntities||[]).some(name=>name.toLowerCase()===item.entity.toLowerCase()))item.flags.push('Entity scope to confirm');
         if(cloud&&item.pricing==='Pay As You Go'&&item.subscription===0)item.flags.push('PAYG: no annual fee recorded');
         if(!sw&&!item.hwSupportCurrency&&!item.hwOrderCurrency)item.flags.push('Hardware purchase currency missing');
-        if(!sw&&config.financial?.hardwarePurchaseCurrency==='support'&&item.hwSupportCurrency)item.flags.push('Hardware purchase currency: support-currency assumption enabled');
-        if(item.hwPurchaseMissing)item.flags.push('Hardware purchase amount missing');
-        if(!sw&&config.financial?.hardwareSupportAnnual!==true){item.hardware=null;item.annualSupport=null;item.flags.push('Hardware support annual basis unconfirmed: excluded from annual totals');}
+        if(!sw&&item.hwSupportCurrency)item.flags.push('Hardware purchase currency: shared support-currency preference');
+        if(item.hwPurchaseMissing)item.flags.push(item.hwPurchaseAssumedZero?'Hardware purchase source blank: calculated as zero under shared reporting policy':'Hardware purchase amount invalid or missing');
+        if(!sw)item.flags.push('Hardware support treated as annual under shared reporting policy');
         if(cloud&&/Unclassified/.test(segment))item.flags.push('Cloud classification to confirm');
         result.push(item);
       });
@@ -207,14 +208,15 @@ const Estate = (() => {
   }
   function hardwarePurchaseCurrency(r){
     const support=text(r.hwSupportCurrency).trim().toUpperCase(),purchase=text(r.hwOrderCurrency).trim().toUpperCase();
-    if(config.financial?.hardwarePurchaseCurrency==='support'&&/^[A-Z]{3}$/.test(support))return {currency:support,basis:'Support currency preferred: '+support+' from Support Fees (USD); purchase-currency assumption. Recorded order currency '+(purchase||'blank')+' retained.'};
+    if(/^[A-Z]{3}$/.test(support))return {currency:support,basis:'Support currency preferred: '+support+' from Support Fees (USD); shared reporting policy. Recorded order currency '+(purchase||'blank')+' retained.'};
     if(/^[A-Z]{3}$/.test(purchase))return {currency:purchase,basis:'Recorded order currency '+purchase};
     return {currency:'',basis:'Support and purchase currencies unavailable'};
   }
   function hardwareInvestmentReview(rs,currency,rates={},rateDates={}){
-    const rows=rs.filter(r=>r.kind==='Hardware'),issues={lines:rows.length,missingAmount:0,missingCurrency:0,missingRates:[],knownTotal:0,complete:false,total:null};
+    const rows=rs.filter(r=>r.kind==='Hardware'),issues={lines:rows.length,missingAmount:0,assumedZero:0,missingCurrency:0,missingRates:[],knownTotal:0,complete:false,total:null};
     const missing=new Set(),fx=c=>c==='USD'?1:Number.isFinite(Number(rates[c]))&&Number(rates[c])>0&&date(rateDates[c])?Number(rates[c]):null;
     for(const r of rows){
+      if(r.hwPurchaseAssumedZero&&r.hwPurchase===0){issues.missingAmount++;issues.assumedZero++;continue;}
       if(r.hwPurchaseMissing||numeric(r.hwPurchase)===null){issues.missingAmount++;continue;}
       const fromCurrency=hardwarePurchaseCurrency(r).currency;
       if(!fromCurrency){issues.missingCurrency++;continue;}
@@ -224,7 +226,7 @@ const Estate = (() => {
       if(from===null)missing.add(fromCurrency);if(to===null)missing.add(currency);
       if(from!==null&&to!==null)issues.knownTotal+=r.hwPurchase/from*to;
     }
-    issues.missingRates=[...missing].sort();issues.complete=rows.length>0&&!issues.missingAmount&&!issues.missingCurrency&&!issues.missingRates.length;
+    issues.missingRates=[...missing].sort();issues.complete=rows.length>0&&issues.missingAmount===issues.assumedZero&&!issues.missingCurrency&&!issues.missingRates.length;
     issues.total=issues.complete?issues.knownTotal:null;return issues;
   }
   function hardwareInvestment(rs,currency,rates,rateDates){return hardwareInvestmentReview(rs,currency,rates,rateDates).total;}

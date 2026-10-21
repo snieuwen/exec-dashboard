@@ -5,7 +5,7 @@
 - Customer users work in ordinary local Codex project folders with a fixed core release under _core/. They do not need their own repository or fork. Keep customer configuration, CSS, extension code, knowledge and data outside the unchanged core copy.
 - Maintain src/model.js as the shared financial model. Browser and build-time processing must use identical source preparation rules in src/rules.js.
 - Preserve raw source values and source-row lineage. Distinguish missing values from zero and require dated exchange rates for conversion.
-- Do not infer hardware annual support or purchase currency from another customer's assumptions. See docs/FINANCIAL_BASIS.md.
+- Apply the mandatory shared hardware policy: support fees are annual, purchase currency prefers same-row support currency with order-currency fallback, and blank acquisitions calculate as zero. Preserve raw blanks and original currency in evidence; do not describe this policy as source confirmation. See docs/FINANCIAL_BASIS.md.
 - Preserve offline use. Do not add telemetry, runtime CDN dependencies or remote calls.
 - Build from config/default.json to produce an empty, neutral report. Keep generated artifacts in ignored dist/ and qa/.
 - Verify meaningful changes with node --test tests/core.test.cjs, node scripts/check-repository.cjs and node scripts/build.cjs. Run the browser suite for interaction, workbook-loader, rendering and export changes.

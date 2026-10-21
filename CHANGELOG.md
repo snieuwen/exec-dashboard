@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-10-21
+
+- Make three hardware reporting rules mandatory for all customers, including legacy configurations: treat support as annual, prefer same-row support currency with order fallback, and calculate blank purchases as zero.
+- Preserve source blanks, missing-value flags and original order currency. Distinguish assumed zeros from recorded zeros; invalid nonblank values and missing rates for nonzero values still block totals.
+- Update financial evidence, CSV fields, documentation and regression coverage. No change to software purchase-currency policy.
+
 ## 0.3.0 â€” 2026-10-21
 
 - Read original software License Level and License Type into the shared model; classify ULA and Capped ULA from License Level only.
