@@ -1,5 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const E=require('../src/model.js'),R=require('../src/rules.js'),{build}=require('../scripts/build.cjs'),{fixture}=require('./helpers.cjs');
+const prepare=(input,config={},snapshot='2026-01-31')=>R.prepare(input,config,{snapshot});
 test('normalization selects active rows and keeps annual measures separate from purchases',()=>{
  E.configure({financial:{hardwareSupportAnnual:true}});const rows=E.normalize(fixture()),a=E.aggregate(rows);
  assert.equal(rows.length,3);assert.equal(a.purchase,1000);assert.equal(a.support,200);assert.equal(a.subscription,300);assert.equal(a.hardware,100);assert.equal(a.annual,600);
@@ -41,9 +42,9 @@ test('dated FX is mandatory; same-currency source values do not require conversi
  assert.equal(E.reportingAmount(100,null,'','EUR',{EUR:.8},{EUR:'2026-01-01'}).amount,80);
 });
 test('cleansing preserves original row lineage and does not mutate input',()=>{
- const input=fixture(),before=JSON.stringify(input),prepared=R.prepare(input,{cleansing:[{sheet:'sw-details',action:'exclude',column:input['sw-details'][0][11],values:['Inactive']}]});
+ const input=fixture(),before=JSON.stringify(input),prepared=prepare(input,{cleansing:[{sheet:'sw-details',action:'exclude',column:input['sw-details'][0][11],values:['Inactive']}]});
  assert.equal(prepared.source['sw-details'].length,3);assert.equal(prepared.origins['sw-details'][1].row,3);assert.equal(prepared.counts['sw-details'].excluded,1);assert.equal(JSON.stringify(input),before);
- assert.throws(()=>R.prepare(input,{cleansing:[{action:'trim',column:'Unknown'}]}),/Unknown cleansing column/);
+ assert.throws(()=>prepare(input,{cleansing:[{action:'trim',column:'Unknown'}]}),/Unknown cleansing column/);
 });
 test('header-only empty source is supported and bad column layouts fail',()=>{
  E.configure({});const input=fixture();for(const name of Object.keys(input))input[name]=input[name].slice(0,1);assert.deepEqual(E.normalize(input),[]);
@@ -72,18 +73,18 @@ test('mandatory inactive cleansing covers both sheets, ignores case/whitespace a
  sw[3][11]='  iNaCtIvE  ';hw.push([...hw[1]]);hw[2][31]=' INACTIVE ';hw[2][0]='Historical hardware entity';
  sw.push([...sw[1]]);sw[4][4]='Later active entity';
  const before=JSON.stringify(input);
- const prepared=R.prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['inactive'],value:'Active'}]});
+ const prepared=prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['inactive'],value:'Active'}]});
  assert.equal(prepared.counts['sw-details'].input,4);assert.equal(prepared.counts['sw-details'].retained,3);assert.equal(prepared.counts['sw-details'].excludedInactive,1);
  assert.equal(prepared.counts['hw-details'].excludedInactive,1);assert.equal(prepared.source['hw-details'].length,2);
  assert.deepEqual(prepared.origins['sw-details'].map(x=>x.row),[2,3,5]);
  assert.equal(JSON.stringify(input),before);
- const again=R.prepare(prepared.source);assert.deepEqual(again.source,prepared.source);assert.equal(again.counts['sw-details'].excludedInactive,0);
- const defaults=R.prepare(input);assert.deepEqual(defaults.source,prepared.source);
+ const again=prepare(prepared.source);assert.deepEqual(again.source,prepared.source);assert.equal(again.counts['sw-details'].excludedInactive,0);
+ const defaults=prepare(input);assert.deepEqual(defaults.source,prepared.source);
 });
 
 test('cleansing also removes rows made inactive by a customer rule and preserves unrelated statuses',()=>{
  const input=fixture();input['sw-details'][1][11]='Pending';
- const prepared=R.prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['Active'],value:'Inactive'}]});
+ const prepared=prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support Status',values:['Active'],value:'Inactive'}]});
  assert.equal(prepared.source['sw-details'].length,2);assert.equal(prepared.source['sw-details'][1][11],'Pending');assert.equal(prepared.counts['sw-details'].excludedInactive,2);
 });
 
@@ -156,4 +157,31 @@ test('ULA starts collapsed and expands one level with terminal products',()=>{
   click(root,true);click(root,false);assert(!render().includes('data-ula-level="product"'));
   view.reset();assert(!render().includes('data-ula-level="order"'));
  }
+});
+
+test('mandatory end-date scope uses export date for software and hardware, including perpetual licences',()=>{
+ const input=fixture(),sw=input['sw-details'],hw=input['hw-details'];
+ for(const value of [{date:'2026-01-30'},'2026-01-31','2026-02-01',null,'not a date','2026-02-30',46052,'2026-01-30_00:00:00']){const a=[...sw[1]];a[31]=value;sw.push(a);const b=[...hw[1]];b[33]=value;hw.push(b);}
+ const before=JSON.stringify(input),result=prepare(input,{},'2026-01-31');
+ assert.equal(result.counts['sw-details'].excludedPastEnd,3);assert.equal(result.counts['hw-details'].excludedPastEnd,3);
+ assert.equal(result.counts['sw-details'].missingEndDate,1);assert.equal(result.counts['sw-details'].invalidEndDate,2);
+ assert(result.source['sw-details'].some(r=>r[31]==='2026-01-31'));assert(result.source['sw-details'].some(r=>r[31]==='2026-02-01'));
+ assert(result.excludedRows['hw-details'].some(r=>r.reason==='Past end date'));assert.equal(JSON.stringify(input),before);
+ const again=prepare(result.source,{},'2026-01-31');assert.deepEqual(again.source,result.source);assert.equal(again.counts['hw-details'].excludedPastEnd,0);
+ assert.throws(()=>R.prepare(input),/export\/snapshot date/);assert.throws(()=>prepare(input,{},'2026-02-30'),/export\/snapshot date/);
+});
+test('customer rules cannot revive expired rows or leave newly expired rows in scope',()=>{
+ const input=fixture();input['sw-details'][1][31]={date:'2020-01-01'};
+ const result=prepare(input,{cleansing:[{sheet:'sw-details',action:'replace',column:'Support/Subscription End Date',values:['2020-01-01'],value:'2030-01-01'}]});assert.equal(result.counts['sw-details'].excludedPastEnd,1);
+ const next=prepare(fixture(),{cleansing:[{sheet:'hw-details',action:'replace',column:fixture()['hw-details'][0][33],values:['[object Object]'],value:'2020-01-01'}]});assert.equal(next.counts['hw-details'].excludedPastEnd,1);
+});
+test('CLI embeds only export-date scope and preserves the row pointers of survivors',()=>{
+ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'exec-end-date-'));
+ try{const input=fixture();input['sw-details'][1][31]='2020-01-01';input['hw-details'][1][33]='2020-01-01';const file=path.join(tmp,'source.json'),output=path.join(tmp,'report.html');fs.writeFileSync(file,JSON.stringify(input));const manifest=build({source:file,snapshot:'2026-01-31',output});assert.equal(manifest.sourceRecords['sw-details'].excludedPastEnd,1);assert.equal(manifest.sourceRecords['hw-details'].retained,0);const html=fs.readFileSync(output,'utf8'),source=JSON.parse(html.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(source['sw-details'].length,2);assert.equal(source['hw-details'].length,1);assert.equal(source['sw-details'][1][18],'Example subscription');}finally{fs.rmSync(tmp,{recursive:true,force:true});}
+});
+
+test('ULA order information controls carry an entity-scoped key and never add product expansion',()=>{
+ const q=require('../src/report-quantities.js'),rows=E.normalize(require('./helpers.cjs').ulaFixture()),view=q.create();view.action({dataset:{quantityExpand:'all'}});const html=view.render(rows,{areas:E.areas});
+ assert.equal((html.match(/data-ula-order-info=/g)||[]).length,3);assert(html.includes('View all order details'));assert(html.includes('TEST-CAPPED-ORDER'));
+ for(const product of html.matchAll(/<tr[^>]*data-ula-level="product".*?<\/tr>/gs))assert(!product[0].includes('<button'));
 });

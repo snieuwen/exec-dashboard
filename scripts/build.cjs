@@ -20,7 +20,7 @@ function build(options={}){
  for(const [sheet,columns]of Object.entries(headers)){
   if(!Array.isArray(input[sheet])||JSON.stringify(input[sheet][0])!==JSON.stringify(columns))throw Error('Unexpected source column layout: '+sheet);
  }
- const prepared=Rules.prepare(input,config),source=prepared.source;
+ const prepared=Rules.prepare(input,config,{snapshot}),source=prepared.source;
  Estate.configure(config);Estate.normalize(source);
  const customerCss=config.themeFile?fs.readFileSync(path.resolve(configDir,config.themeFile),'utf8'):'';
  if(/@import|url\s*\(/i.test(customerCss))throw Error('Customer CSS must be self-contained; remote/resource URLs are not supported.');

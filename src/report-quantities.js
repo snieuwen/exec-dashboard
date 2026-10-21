@@ -87,7 +87,8 @@ const ReportQuantities=(()=>{
     function ulaRow(label,rs,path,depth,stage){
      const id=JSON.stringify(['ula',...path]),leaf=stage==='product',isOpen=!leaf&&!collapsed.has(id)&&(expanded.has(id)||!collapsed.has('*')&&ulaExpandAll);
      const name=leaf?'<span>'+esc(label)+'</span>':'<button class="link pivot-toggle" data-quantity-node="'+esc(id)+'" data-quantity-depth="'+depth+'" aria-expanded="'+isOpen+'">'+(isOpen?'−':'+')+' '+esc(label)+'</button>';
-     let html='<tr class="pivot-level-'+depth+'" data-ula-level="'+stage+'"><td style="padding-left:'+(12+depth*18)+'px">'+name+'</td>'+ulaCells(rs,stage)+'</tr>';
+     const orderInfo=stage==='order'?'<button type="button" class="info ula-order-info" data-ula-order-info="'+esc(JSON.stringify([rs[0].order||rs[0].id,rs[0].entity]))+'" aria-label="'+esc('View all details for order '+(rs[0].order||'not supplied')+' — '+rs[0].entity)+'" title="View all order details">ⓘ</button>':'';
+     let html='<tr class="pivot-level-'+depth+'" data-ula-level="'+stage+'"><td style="padding-left:'+(12+depth*18)+'px">'+name+orderInfo+'</td>'+ulaCells(rs,stage)+'</tr>';
      if(isOpen){
       if(stage==='root')for(const [orderKey,children]of orders){const first=children[0];html+=ulaRow('Order '+(first.order||'not supplied')+' — '+(first.entity||'Entity not supplied'),children,[orderKey],1,'order');}
       else if(stage==='order')for(const [productKey,children]of group(rs,r=>JSON.stringify([r.product,r.part,unit(r),r.term,entitlement(r).kind])))html+=ulaRow(children[0].product||'Product not supplied',children,[...path,productKey],2,'product');

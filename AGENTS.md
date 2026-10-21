@@ -11,3 +11,5 @@
 - Verify meaningful changes with node --test tests/core.test.cjs, node scripts/check-repository.cjs and node scripts/build.cjs. Run the browser suite for interaction, workbook-loader, rendering and export changes.
 - Update documentation and CHANGELOG.md when behavior changes. Use independent semantic core versions; a customer data refresh is not a core release.
 - No customer dataset is needed for verification: tests generate fictional examples at runtime.
+
+- Mandatory scope cleansing removes Inactive rows and rows whose software support/subscription or hardware contract end date is before each input export date. Require the snapshot date for populated inputs; never use today. Unsupported perpetual licences are outside report scope. Retain and flag blank/invalid end dates, preserve raw workbooks and log exclusion reasons.

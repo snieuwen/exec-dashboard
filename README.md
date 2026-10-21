@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.5.0** simplifies the ULA quantity pivot: collapsed by default, one level per click, ending in product, quantity and metric.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.6.0** adds mandatory support/subscription end-date cleansing against the EIX export date, including unsupported perpetual licences outside reporting scope.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -101,4 +101,12 @@ The existing repository's GPL v3 license is retained. See [LICENSE](LICENSE) and
 
 From core v0.2.0, source preparation always removes software rows with `Support Status = Inactive` and hardware rows with `Contract Status Type = Inactive`, ignoring case and surrounding whitespace. This runs in CLI builds and browser workbook uploads, before configurable customer rules; replacement rules cannot reactivate a removed source row. A row changed to Inactive by a customer rule is also removed.
 
-Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.
+Inactive rows are absent from the embedded report source, entity directory, CSV exports and saved reports. No customer setting is required to enable this policy, and an empty `cleansing` list does not disable it. Other status values are retained only within the mandatory export-date scope; financial reporting still selects Active only. Original input workbooks remain unchanged. Preparation counts include `excludedInactive`, and original workbook row pointers are retained for surviving rows.
+
+## Mandatory export-date cleansing
+
+From v0.6.0, shared source preparation always removes Inactive rows, then removes any remaining software/cloud row whose Support/Subscription End Date is strictly before the EIX export/snapshot date, or hardware row whose Support Expiration date is strictly before that date. This includes perpetual licences with ended support: unsupported licence rights may still be valid but are outside this dashboard scope. The rule uses the fixed date of each input export, never the execution date or today. End dates equal to the export date are retained. Blank or invalid end dates are retained for review, not guessed.
+
+A populated source requires an explicit valid export date. CLI --snapshot supplies it; browser uploads use the selected snapshot date or an unambiguous filename date. A quarter alone is not an export date. Previous comparison snapshots use their own export dates. Mandatory rules run before and after customer transformations and cannot be disabled. Original workbooks are unchanged; excludedPastEnd is logged separately from excludedInactive and excludedCustomer, with excluded source-row references and reasons. Rows with both reasons are counted under Inactive first, without double counting. Removed records do not enter embedded data, financial or quantity pivots, directories, exports or saved reports. Rows retained at the export date are not removed merely because time later passes.
+
+ULA order rows include an accessible information button after the order label. It opens all retained source lines for that order and entity, including non-ULA products on the same order, with financial values, original source fields and original row references. It does not expand the pivot; ULA product rows remain terminal.

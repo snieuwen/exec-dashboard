@@ -10,7 +10,7 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   assert.equal(await page.locator('.brand img').count(),0);
   for(const view of ['overview','atlas','portfolio','geography','recent','aging','renewals','data','notice']){await page.locator('.nav [data-view="'+view+'"]').click();assert((await page.locator('#main').innerText()).length>100,view);}
   await page.screenshot({path:path.join(qa,'generic-empty.png'),fullPage:true});
-  const source=fixture();source['hw-details'].push([...source['hw-details'][1]]);source['hw-details'][2][31]=' InAcTiVe ';source['hw-details'][2][0]='Historical hardware entity';const xlsx=path.join(tmp,'Example_2026-01-31.xlsx');fs.writeFileSync(xlsx,workbook(source));
+  const source=fixture();source['hw-details'].push([...source['hw-details'][1]]);source['hw-details'][2][31]=' InAcTiVe ';source['hw-details'][2][0]='Historical hardware entity';source['sw-details'][2][31]={date:'2026-01-31'};const expiredSw=[...source['sw-details'][1]];expiredSw[4]='Expired software entity';expiredSw[31]='2026-01-30';source['sw-details'].push(expiredSw);const expiredHw=[...source['hw-details'][1]];expiredHw[0]='Expired hardware entity';expiredHw[33]='2026-01-30';source['hw-details'].push(expiredHw);const xlsx=path.join(tmp,'Example_2026-01-31.xlsx');fs.writeFileSync(xlsx,workbook(source));
   await page.locator('#quick-source-file').setInputFiles(xlsx);await page.waitForFunction(()=>/Loaded|Source not loaded/.test(document.getElementById('quick-load-status').textContent));assert.match(await page.locator('#quick-load-status').innerText(),/Loaded 3 Active records/);
   assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
   await page.screenshot({path:path.join(qa,'generic-overview.png'),fullPage:true});
@@ -22,7 +22,7 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   await page.screenshot({path:path.join(qa,'generic-atlas.png'),fullPage:true});
   await page.locator('.nav [data-view="data"]').click();assert(!(await page.locator('#main').innerText()).includes('${esc('));await page.locator('#fx-currency').selectOption('EUR');await page.locator('#rate').fill('0.8');await page.locator('#rate-date').fill('2026-01-31');await page.locator('#apply-rate').click();await page.locator('.nav [data-view="overview"]').click();await page.locator('#currency').selectOption('EUR');
   await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
-  const [saved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const savedPath=path.join(tmp,'saved.html');await saved.saveAs(savedPath);const savedHtml=fs.readFileSync(savedPath,'utf8');const cleanedEmbedded=JSON.parse(savedHtml.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(cleanedEmbedded['sw-details'].length,3);assert.equal(cleanedEmbedded['hw-details'].length,2);assert(!JSON.stringify(cleanedEmbedded).includes('Historical hardware entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Other Example Entity'));const p2=await browser.newPage();p2.on('pageerror',e=>errors.push(e.message));await p2.goto(pathToFileURL(savedPath).href);await p2.locator('.report-notice').waitFor();assert.equal(await p2.locator('#currency').inputValue(),'EUR');await p2.close();
+  const [saved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const savedPath=path.join(tmp,'saved.html');await saved.saveAs(savedPath);const savedHtml=fs.readFileSync(savedPath,'utf8');const cleanedEmbedded=JSON.parse(savedHtml.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(cleanedEmbedded['sw-details'].length,3);assert.equal(cleanedEmbedded['hw-details'].length,2);assert(!JSON.stringify(cleanedEmbedded).includes('Historical hardware entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Other Example Entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired software entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired hardware entity'));assert.equal(cleanedEmbedded['sw-details'][2][31].date,'2026-01-31');const p2=await browser.newPage();p2.on('pageerror',e=>errors.push(e.message));await p2.goto(pathToFileURL(savedPath).href);await p2.locator('.report-notice').waitFor();assert.equal(await p2.locator('#currency').inputValue(),'EUR');await p2.close();
   await page.setViewportSize({width:390,height:844});for(const view of ['overview','atlas','data']){await page.locator('.nav [data-view="'+view+'"]').click();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),view+' mobile overflow');}
   await page.screenshot({path:path.join(qa,'generic-mobile.png'),fullPage:true});
   // A separate customer configuration survives source refresh and saved copies.
@@ -47,8 +47,13 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   assert.equal(JSON.parse(fs.readFileSync(blankSavedPath,'utf8').match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1])['hw-details'][1][29],null);
   await page.goto(pathToFileURL(blankSavedPath).href);await page.locator('.nav [data-view="overview"]').click();
   assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
+  // Scope follows the chosen export date, not the current day or a quarter-end guess.
+  const earlierFile=path.join(tmp,'Earlier_2026-01-30.xlsx');fs.writeFileSync(earlierFile,workbook(source));
+  await page.goto(pathToFileURL(output).href);await page.locator('#quick-source-file').setInputFiles(earlierFile);await page.waitForFunction(()=>/Loaded/.test(document.getElementById('quick-load-status').textContent));assert.match(await page.locator('#quick-load-status').innerText(),/Loaded 5 Active records/);
+  const quarterFile=path.join(tmp,'Quarter_2026-Q1.xlsx');fs.writeFileSync(quarterFile,workbook(source));
+  page.once('dialog',dialog=>dialog.accept('2026-01-31'));await page.locator('#quick-source-file').setInputFiles(quarterFile);await page.waitForFunction(()=>/Loaded 3 Active/.test(document.getElementById('quick-load-status').textContent));
   // ULA and Capped ULA use the same pivot controls, evidence and source refresh path.
-  const ulaSource=ulaFixture(),ulaFile=path.join(tmp,'ULA_2026-01-31.xlsx');fs.writeFileSync(ulaFile,workbook(ulaSource));
+  const ulaSource=ulaFixture();ulaSource['sw-details'].find(row=>row[27]==='TEST-REGULAR-ONE')[27]='TEST-CAPPED-ORDER';const ulaFile=path.join(tmp,'ULA_2026-01-31.xlsx');fs.writeFileSync(ulaFile,workbook(ulaSource));
   await page.goto(pathToFileURL(output).href);await page.locator('#quick-source-file').setInputFiles(ulaFile);
   await page.waitForFunction(()=>/Loaded/.test(document.getElementById('quick-load-status').textContent));
   const baseline=Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount'));
@@ -59,8 +64,13 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   assert.equal(await page.locator('.ula-note').count(),0);
   await page.locator('[data-ula-level="root"] button').click();assert.equal(await page.locator('[data-ula-level="order"]').count(),3);
   assert.equal(await page.locator('[data-ula-level="product"]').count(),0);
-  await page.locator('[data-ula-level="order"] button').first().click();assert(await page.locator('[data-ula-level="product"]').count()>0);
+  await page.locator('[data-ula-level="order"] [data-quantity-node]').first().click();assert(await page.locator('[data-ula-level="product"]').count()>0);
   assert.equal(await page.locator('[data-ula-level="product"] button').count(),0);
+  const icon=page.getByRole('button',{name:'View all details for order TEST-CAPPED-ORDER — Example Entity',exact:true});
+  const expandedBefore=await page.locator('[data-ula-level="product"]').count();await icon.click();await page.locator('#detail[open]').waitFor();
+  assert.match(await page.locator('#detail-title').innerText(),/TEST-CAPPED-ORDER/);assert.match(await page.locator('#detail-body').innerText(),/Example single licence/);assert.equal(await page.locator('[data-ula-order-line]').count(),3);
+  await page.locator('#detail-body details summary').first().click();assert.match(await page.locator('#detail-body').innerText(),/License Level/);await page.locator('#close-detail').click();assert.equal(await page.locator('[data-ula-level="product"]').count(),expandedBefore);
+
   await page.locator('[data-ula-level="root"] button').click();
   await page.locator('[data-ula-level="root"] button').click();assert.equal(await page.locator('[data-ula-level="product"]').count(),0);
   await page.locator('[data-quantity-expand="all"]').click();

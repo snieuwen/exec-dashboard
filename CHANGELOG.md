@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 — 2026-10-21
+
+- Add an accessible information button beside ULA order names to open all in-scope order/entity source details, keeping pivot expansion and terminal product rows unchanged.
+
+- Mandatorily exclude software/cloud and hardware rows with end dates before their own EIX export date, in CLI builds and browser uploads. Keep end dates equal to the cutoff; require a valid export date for populated input.
+- Include perpetual licences with ended support in the exclusion scope; document that unsupported licence rights may remain valid but are outside these reports. Keep missing/invalid end dates for review.
+- Log inactive, past-end and customer removals separately with source-row reasons and preserve surviving lineage. Apply scope before and after customer transformations.
+- Remove quarter-only filename date inference; retain fixed export-date behaviour, cleaned exports/saves and the collapsed ULA pivot.
+
 ## 0.5.0 — 2026-10-21
 
 - Start ULA products and orders collapsed, including a single order. Reveal one level per click and clear descendant expansion when toggling parents.

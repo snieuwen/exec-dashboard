@@ -9,10 +9,10 @@ const Estate = (() => {
   const text = x => x == null ? '' : String(x);
   function date(x) {
     if (x && typeof x === 'object' && x.date) x=x.date;
-    if (typeof x==='number') return new Date(Math.round((x-25569)*day)).toISOString().slice(0,10);
+    if (typeof x==='number'){if(!Number.isFinite(x)||x<1)return '';try{return new Date(Math.round((x-25569)*day)).toISOString().slice(0,10);}catch{return '';}}
     if (!x) return '';
     const s=String(x).slice(0,10);
-    return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : '';
+    try{return /^\d{4}-\d{2}-\d{2}$/.test(s)&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s?s:'';}catch{return '';}
   }
   function swCategory(r) {
     if(r[16]==='Exadata Software')return [areas[2],'Exadata software'];
@@ -85,7 +85,7 @@ const Estate = (() => {
         if(item.country==='Unassigned')item.flags.push('Country missing');
         if(!item.contract)item.flags.push('Contract number missing');
         if(item.contract.includes(';'))item.flags.push('Multiple contract IDs: fee allocation needed');
-        if(!item.end)item.flags.push('End date missing');
+        if(!item.end)item.flags.push('End date missing or invalid: retained for review');
         if((config.reviewEntities||[]).some(name=>name.toLowerCase()===item.entity.toLowerCase()))item.flags.push('Entity scope to confirm');
         if(cloud&&item.pricing==='Pay As You Go'&&item.subscription===0)item.flags.push('PAYG: no annual fee recorded');
         if(!sw&&!item.hwSupportCurrency&&!item.hwOrderCurrency)item.flags.push('Hardware purchase currency missing');
