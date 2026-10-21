@@ -122,7 +122,7 @@ test('quantity renderer separates ULA orders above regular quantities without ch
  const q=require('../src/report-quantities.js'),{ulaFixture}=require('./helpers.cjs');const rows=E.normalize(ulaFixture()),view=q.create();
  let html=view.render(rows,{areas:E.areas});
  assert(html.includes('aria-label="ULA products"'));assert(html.indexOf('ula-quantity-table')<html.indexOf('regular-quantity-table'));
- assert.equal((html.match(/data-ula-level="root"/g)||[]).length,1);assert.equal((html.match(/data-ula-level="order"/g)||[]).length,3);
+ assert.equal((html.match(/data-ula-level="root"/g)||[]).length,1);assert.equal((html.match(/data-ula-level="order"/g)||[]).length,0);
  assert(!html.includes('ULA Capped'));assert(!html.includes('Max. 500'));
  const button={dataset:{quantityExpand:'all'}};view.action(button);html=view.render(rows,{areas:E.areas});
  assert(html.includes('∞ Unlimited'));assert(html.includes('Max. 250'));assert(html.includes('Max. 100'));
@@ -137,5 +137,23 @@ test('ULA renderer keeps unknown orders, unlike metrics and differing capped qua
  const q=require('../src/report-quantities.js'),base=E.normalize(require('./helpers.cjs').ulaFixture()).find(r=>r.order==='TEST-CAPPED-ORDER');
  const rows=[{...base,id:'a',order:'',quantity:100},{...base,id:'b',order:'',quantity:200},{...base,id:'c',order:'ONE',quantity:100},{...base,id:'d',order:'ONE',quantity:200},{...base,id:'e',order:'ONE',metric:'Named User Plus',quantity:50}];
  const view=q.create();view.action({dataset:{quantityExpand:'all'}});const html=view.render(rows,{areas:E.areas});
- assert.equal((html.match(/data-ula-level="order"/g)||[]).length,3);assert(html.includes('Multiple limits — expand'));assert(html.includes('Named User Plus'));assert(!html.includes('Max. 300'));
+ assert.equal((html.match(/data-ula-level="order"/g)||[]).length,3);assert(html.includes('Max. 100 / Max. 200'));assert(html.includes('Named User Plus'));assert(!html.includes('Max. 300'));
+});
+
+test('ULA starts collapsed and expands one level with terminal products',()=>{
+ const q=require('../src/report-quantities.js'),all=E.normalize(require('./helpers.cjs').ulaFixture());
+ for(const rows of [all,all.filter(r=>r.order==='TEST-ULA-ORDER')]){
+  const view=q.create(),render=()=>view.render(rows,{areas:E.areas}),root=JSON.stringify(['ula']);
+  const click=(key,open)=>view.action({dataset:{quantityNode:key,quantityDepth:'0'},getAttribute:()=>String(open)});
+  let html=render();assert(!html.includes('data-ula-level="order"'));assert(!html.includes('ula-note'));
+  click(root,false);html=render();assert(html.includes('data-ula-level="order"'));assert(!html.includes('data-ula-level="product"'));
+  const first=rows.find(q.isUla),order=JSON.stringify(['ula',JSON.stringify([first.order,first.entity])]);
+  click(order,false);html=render();assert(html.includes('data-ula-level="product"'));
+  const table=html.split('ula-quantity-table')[1].split('</table>')[0];assert(!table.includes('data-record'));assert(!table.includes('data-ula-level="line"'));
+  for(const product of table.matchAll(/<tr[^>]*data-ula-level="product".*?<\/tr>/gs))assert(!product[0].includes('<button'));
+  click(root,true);click(root,false);assert(!render().includes('data-ula-level="product"'));
+  view.action({dataset:{quantityExpand:'all'}});assert(render().includes('data-ula-level="product"'));
+  click(root,true);click(root,false);assert(!render().includes('data-ula-level="product"'));
+  view.reset();assert(!render().includes('data-ula-level="order"'));
+ }
 });

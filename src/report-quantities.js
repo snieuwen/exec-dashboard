@@ -37,12 +37,18 @@ const ReportQuantities=(()=>{
   return {quantity:rows.length&&groups.size===1&&!missing&&!rows.some(isUla)?rows.reduce((n,r)=>n+r.quantity,0):null,groups:groups.size,missing,metric:metrics.length===1?metrics[0]:'',term:terms.length===1?terms[0]:''};
  }
  function create(){
-  const expanded=new Set(),collapsed=new Set();let expandAll=false;
+  const expanded=new Set(),collapsed=new Set();let expandAll=false,ulaExpandAll=false;
   const open=(key,depth)=>!collapsed.has(key)&&(expandAll||expanded.has(key));
-  function reset(){expandAll=false;expanded.clear();collapsed.clear();}
+  function reset(){expandAll=false;ulaExpandAll=false;expanded.clear();collapsed.clear();}
   function action(button){
-   if(button.dataset.quantityExpand){expandAll=button.dataset.quantityExpand==='all';expanded.clear();collapsed.clear();if(!expandAll)collapsed.add('*');return true;}
-   if(button.dataset.quantityNode){const key=button.dataset.quantityNode,depth=Number(button.dataset.quantityDepth);if(button.getAttribute('aria-expanded')==='true'){expanded.delete(key);collapsed.add(key);}else{expanded.add(key);collapsed.delete(key);}return true;}
+   if(button.dataset.quantityExpand){expandAll=button.dataset.quantityExpand==='all';ulaExpandAll=expandAll;expanded.clear();collapsed.clear();if(!expandAll)collapsed.add('*');return true;}
+   if(button.dataset.quantityNode){const key=button.dataset.quantityNode,depth=Number(button.dataset.quantityDepth),path=JSON.parse(key);
+    if(path[0]==='ula'){
+     ulaExpandAll=false;
+     // Reopening a parent reveals only its immediate children, never remembered descendants.
+     for(const set of [expanded,collapsed])for(const item of set){if(item==='*')continue;const child=JSON.parse(item);if(child.length>path.length&&path.every((part,i)=>child[i]===part))set.delete(item);}
+    }
+    if(button.getAttribute('aria-expanded')==='true'){expanded.delete(key);collapsed.add(key);}else{expanded.add(key);collapsed.delete(key);}return true;}
    return false;
   }
   function render(rows,{areas=[],shell=false,title='Recorded quantities by product',financial=null,prefixes=[]}={}){
@@ -72,26 +78,24 @@ const ReportQuantities=(()=>{
     // Orders are scoped to the source entity; missing order numbers never merge.
     const orders=group(selected,r=>JSON.stringify([r.order||r.id,r.entity]));
     function ulaCells(rs,stage){
-     const leaf=stage==='line',product=stage==='product';
-     if(!leaf&&!product)return '<td></td><td></td><td>'+esc([...new Set(rs.map(r=>entitlement(r).label))].join(' / '))+'</td><td class="num">'+rs.length+'</td>';
+     if(stage!=='product')return '<td></td><td></td>';
      const forms=rs.map(entitlement),valid=forms.every(e=>!e.issue),kinds=new Set(forms.map(e=>e.kind)),limits=[...new Set(forms.map(e=>e.limit))];
      let display='Review quantity';
-     if(valid&&kinds.size===1){if(forms[0].kind==='unlimited')display='∞ Unlimited';else if(limits.length===1)display='Max. '+number(limits[0]);else display='Multiple limits — expand';}
-     return '<td class="num" data-ula-quantity title="Source quantities and limits are not added; expand for original evidence">'+esc(display)+'</td><td>'+esc(unit(rs[0]))+'</td><td>'+esc(forms[0].label)+'</td><td class="num">'+(leaf?'':rs.length)+'</td>';
+     if(valid&&kinds.size===1){if(forms[0].kind==='unlimited')display='∞ Unlimited';else display=limits.map(limit=>'Max. '+number(limit)).join(' / ');}
+     return '<td class="num" data-ula-quantity>'+esc(display)+'</td><td>'+esc(unit(rs[0]))+'</td>';
     }
-    function ulaRow(label,rs,path,depth,stage,defaultOpen=false){
-     const id=JSON.stringify(['ula',...path]),leaf=stage==='line',isOpen=!leaf&&!collapsed.has(id)&&(expanded.has(id)||!collapsed.has('*')&&(expandAll||defaultOpen));
-     const attrs=leaf?(shell?'data-row="'+rs[0].row+'"':'data-record="'+esc(rs[0].id)+'"'):'data-quantity-node="'+esc(id)+'" data-quantity-depth="'+depth+'" aria-expanded="'+isOpen+'"';
-     const meta=stage==='product'?[rs[0].part,rs[0].term].filter(Boolean).join(' · '):'';
-     let html='<tr class="pivot-level-'+Math.min(depth,4)+'" data-ula-level="'+stage+'"'+(leaf?' data-quantity-level="line"':'')+'><td style="padding-left:'+(12+depth*18)+'px"><button class="link pivot-toggle'+(leaf?' quantity-order':'')+'" '+attrs+' title="'+esc(leaf?label+' · '+rs[0].id:label)+'">'+(leaf?'↗':isOpen?'−':'+')+' '+esc(label)+'</button>'+(meta?'<span class="row-meta">'+esc(meta)+'</span>':'')+'</td>'+ulaCells(rs,stage)+'</tr>';
+    function ulaRow(label,rs,path,depth,stage){
+     const id=JSON.stringify(['ula',...path]),leaf=stage==='product',isOpen=!leaf&&!collapsed.has(id)&&(expanded.has(id)||!collapsed.has('*')&&ulaExpandAll);
+     const name=leaf?'<span>'+esc(label)+'</span>':'<button class="link pivot-toggle" data-quantity-node="'+esc(id)+'" data-quantity-depth="'+depth+'" aria-expanded="'+isOpen+'">'+(isOpen?'−':'+')+' '+esc(label)+'</button>';
+     let html='<tr class="pivot-level-'+depth+'" data-ula-level="'+stage+'"><td style="padding-left:'+(12+depth*18)+'px">'+name+'</td>'+ulaCells(rs,stage)+'</tr>';
      if(isOpen){
-      if(stage==='root')for(const [orderKey,children]of orders){const first=children[0];html+=ulaRow('Order '+(first.order||'not supplied')+' — '+(first.entity||'Entity not supplied'),children,[orderKey],1,'order',orders.length===1);}
+      if(stage==='root')for(const [orderKey,children]of orders){const first=children[0];html+=ulaRow('Order '+(first.order||'not supplied')+' — '+(first.entity||'Entity not supplied'),children,[orderKey],1,'order');}
       else if(stage==='order')for(const [productKey,children]of group(rs,r=>JSON.stringify([r.product,r.part,unit(r),r.term,entitlement(r).kind])))html+=ulaRow(children[0].product||'Product not supplied',children,[...path,productKey],2,'product');
-      else for(const r of newestOrders(rs))html+=ulaRow(compactOrderLabel(r),[r],[...path,r.id],depth+1,'line');
      }
      return html;
     }
-    return '<div class="table-scroll table-wrap section-gap"><table aria-label="ULA products" class="data-table table pivot-table quantity-table ula-quantity-table"><thead><tr><th>ULA products / order / product / source line</th><th class="num">Quantity / limit</th><th>Metric</th><th>Licence form</th><th class="num">Active lines</th></tr></thead><tbody>'+ulaRow('ULA products',selected,[],0,'root',true)+'</tbody></table></div><p class="small muted ula-note">ULA and Capped ULA are identified by License Level. ∞ means Unlimited for a ULA source quantity of 1. Capped ULA shows the recorded maximum. No ULA quantities or limits are added; recorded rights do not measure deployment.</p>';
+    return '<div class="table-scroll table-wrap section-gap"><table aria-label="ULA products" class="data-table table pivot-table quantity-table ula-quantity-table"><thead><tr><th>ULA products / order / product</th><th class="num">Quantity / limit</th><th>Metric</th></tr></thead><tbody>'+ulaRow('ULA products',selected,[],0,'root')+'</tbody></table></div>';
+
    }
    const ulaRows=financial?[]:rows.filter(isUla),regularRows=financial?rows:rows.filter(r=>!isUla(r));
    const portfolios=group(regularRows,r=>r.area).sort((a,b)=>areas.indexOf(a[0])-areas.indexOf(b[0]));

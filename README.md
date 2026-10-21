@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.4.0** standardizes hardware calculations: annual support, same-row support-currency preference and blank acquisitions calculated as zero, with raw evidence retained.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.5.0** simplifies the ULA quantity pivot: collapsed by default, one level per click, ending in product, quantity and metric.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
