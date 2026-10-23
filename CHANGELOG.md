@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0 — 2026-10-23
+
+- Group Exadata, Exalogic Elastic Cloud, Private Cloud Appliance and Recovery Appliance hardware under Engineered Systems using product names and detailed FPH hierarchy, preserving component groups and raw evidence.
+- Align hardware aging with the combined scope and migrate saved legacy category filters. Quantities, cleansing and financial calculations are unchanged.
+
 ## 0.6.0 — 2026-10-21
 
 - Add an accessible information button beside ULA order names to open all in-scope order/entity source details, keeping pivot expansion and terminal product rows unchanged.

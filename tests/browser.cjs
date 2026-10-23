@@ -15,9 +15,11 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),600);
   await page.screenshot({path:path.join(qa,'generic-overview.png'),fullPage:true});
   await page.locator('.nav [data-view="portfolio"]').click();await page.locator('[data-portfolio-mode="quantity"]').click();await page.locator('[data-quantity-expand="all"]').click();assert.equal(await page.locator('[data-quantity-level="line"]').count(),3);
+  assert.match(await page.locator('#main').innerText(),/Engineered Systems/);
   await page.locator('[data-portfolio-mode="financial"]').click();await page.locator('[data-quantity-expand="all"]').click();assert.equal(await page.locator('[data-quantity-level="line"]').count(),3);
   await page.locator('[data-record]').first().click();await page.locator('#detail[open]').waitFor();await page.locator('#detail-body summary').click();assert.match(await page.locator('#detail-body').innerText(),/TEST-/);await page.locator('#close-detail').click();
   const [csv]=await Promise.all([page.waitForEvent('download'),page.locator('#export').click()]);const csvPath=path.join(tmp,'evidence.csv');await csv.saveAs(csvPath);assert.match(fs.readFileSync(csvPath,'utf8'),/Original_EIX_row/);
+  await page.locator('.nav [data-view="aging"]').click();assert.equal(await page.locator('#aging-scope option:checked').innerText(),'Engineered Systems');assert(!(await page.locator('#aging-scope').innerText()).includes('Exadata hardware'));
   await page.locator('.nav [data-view="atlas"]').click();await page.locator('.atlas-map').waitFor();assert(await page.locator('.atlas-land').count()>20);await page.locator('.atlas-rank[data-atlas-country="276"]').click();assert.match(await page.locator('.atlas-spotlight').innerText(),/Germany/);
   await page.screenshot({path:path.join(qa,'generic-atlas.png'),fullPage:true});
   await page.locator('.nav [data-view="data"]').click();assert(!(await page.locator('#main').innerText()).includes('${esc('));await page.locator('#fx-currency').selectOption('EUR');await page.locator('#rate').fill('0.8');await page.locator('#rate-date').fill('2026-01-31');await page.locator('#apply-rate').click();await page.locator('.nav [data-view="overview"]').click();await page.locator('#currency').selectOption('EUR');

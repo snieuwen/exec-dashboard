@@ -185,3 +185,17 @@ test('ULA order information controls carry an entity-scoped key and never add pr
  assert.equal((html.match(/data-ula-order-info=/g)||[]).length,3);assert(html.includes('View all order details'));assert(html.includes('TEST-CAPPED-ORDER'));
  for(const product of html.matchAll(/<tr[^>]*data-ula-level="product".*?<\/tr>/gs))assert(!product[0].includes('<button'));
 });
+
+ test('engineered hardware families share a segment without changing components, amounts or source',()=>{
+  E.configure({});
+  for(const family of ['Exadata Database Machine','Oracle Exadata X11M','Exalogic Elastic Cloud X6-2 Legacy','Exa-logic Elastic Cloud','Oracle Private Cloud Appliance X9-2','private-cloud-appliance','Oracle PCA','Zero Data Loss Recovery Appliance','Oracle Recovery Appliance RA23','ZDLRA']){
+   const input=fixture(),row=input['hw-details'][1];row[3]='Component';row[4]='Memory DIMM';row[11]='Classic Engineered Systems';row[14]=family;
+   const before=JSON.stringify(input),hw=E.normalize(input).filter(r=>r.kind==='Hardware');
+   assert.equal(hw[0].segment,'Engineered Systems',family);assert.equal(hw[0].productGroup,'Memory');assert.equal(hw[0].family,'Classic Engineered Systems');
+   assert.equal(hw[0].hardware,100);assert.equal(E.hardwareInvestment(hw,'USD'),500);assert.equal(JSON.stringify(input),before);
+   for(const scope of ['appliances','Engineered Systems','Exadata hardware','Recovery Appliance hardware'])assert.equal(E.hardwareAging(hw,'2026-01-01',scope).base.length,1);
+  }
+  for(const family of ['X86','SPARC','Database Appliance','Big Data Appliance','Classic Engineered Systems','ZFS Storage Appliance']){
+   const row=Array(64).fill('');row[11]=family;row[4]='Memory DIMM';assert.equal(E.hardwareSegment(row),'Other hardware',family);
+  }
+ });

@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.6.0** adds mandatory support/subscription end-date cleansing against the EIX export date, including unsupported perpetual licences outside reporting scope.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.7.0** groups Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance hardware under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 

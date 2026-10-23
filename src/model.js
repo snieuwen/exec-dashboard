@@ -26,6 +26,13 @@ const Estate = (() => {
     if(r[12]==='Applications')return [areas[1],r[16]||'Other applications'];
     return [areas[7],r[12]||'Unclassified software'];
   }
+  // Classify hardware from both product names and the detailed FPH hierarchy.
+  // Component labels alone (for example DIMM) do not identify their parent system.
+  function hardwareSegment(row){
+    const labels=[row[3],row[4],...row.slice(9,16)].map(value=>text(value).toLowerCase().replace(/[^a-z0-9]+/g,' '));
+    const engineered=/\bexadata\b|\bexa\s+data\b|\bexalogic\b|\bexa\s+logic\b|\bprivate\s+cloud\s+appliance\b|\bpca\b|\brecovery\s+appliance\b|\bzdlra\b/;
+    return labels.some(label=>engineered.test(label))?'Engineered Systems':'Other hardware';
+  }
   function hardwareGroup(product){
     const p=text(product);
     if(/model family/i.test(p))return 'System families / configuration references';
@@ -72,7 +79,7 @@ const Estate = (() => {
       matrix.slice(1).forEach((r,index)=>{
         if(!r[sw?11:31]||(!options.includeInactive&&r[sw?11:31]!=='Active'))return;
         const cloud=sw&&r[12]==='Cloud',technologySub=sw&&!cloud&&r[18]==='Java SE - Subscription';
-        const [area,segment]=sw?swCategory(r):[areas[3],r[11]==='Exadata Database Machine'?'Exadata hardware':r[11]==='Zero Data Loss Recovery Appliance'?'Recovery Appliance hardware':'Other hardware'];
+        const [area,segment]=sw?swCategory(r):[areas[3],hardwareSegment(r)];
         const item={id:`${sheet}!${index+2}`,sheet,row:index+2,status:text(r[sw?11:31]),area,segment,environment:cloud?'Cloud':'On-prem',kind:sw?(cloud?'Subscription':technologySub?'Technology subscription':'Software licence'):'Hardware',
           entity:text(r[sw?4:0]),party:text(r[sw?60:37]),country:text(r[sw?10:1])||'Unassigned',product:text(r[sw?18:4]),family:text(r[sw?16:11]),part:text(r[sw?22:5]),metric:text(r[sw?23:6])||'Unspecified',quantity:numeric(r[sw?24:17]),term:text(r[sw?26:7]),licenseLevel:text(r[sw?25:28]),licenseType:text(r[sw?63:27]),agreement:sw?text(r[8]):'',
           purchase:sw&&!cloud&&!technologySub?numeric(r[36]):null,support:sw&&!cloud&&!technologySub?numeric(r[40]):null,subscription:cloud||technologySub?numeric(r[40]):null,hardware:!sw?numeric(r[55]):null,
@@ -238,7 +245,8 @@ const Estate = (() => {
     return years;
   }
   function hardwareAging(rs,asof,scope='appliances',band='all',review='all'){
-    const base=rs.filter(r=>r.status==='Active'&&r.kind==='Hardware'&&(scope==='all'||scope==='appliances'&&['Exadata hardware','Recovery Appliance hardware'].includes(r.segment)||r.segment===scope));
+    if(['appliances','Exadata hardware','Recovery Appliance hardware'].includes(scope))scope='Engineered Systems';
+    const base=rs.filter(r=>r.status==='Active'&&r.kind==='Hardware'&&(scope==='all'||r.segment===scope));
     const missing=base.filter(r=>hardwareAge(r,asof)===null),aged=base.filter(r=>hardwareAge(r,asof)>=5);
     const bands=[{key:'5',label:'5 to <6 years',rows:aged.filter(r=>hardwareAge(r,asof)===5)},{key:'6',label:'6 to <7 years',rows:aged.filter(r=>hardwareAge(r,asof)===6)},{key:'7',label:'7 years or older',rows:aged.filter(r=>hardwareAge(r,asof)>=7)}];
     let selected=band==='missing'?missing:band==='all'?aged:(bands.find(b=>b.key===band)?.rows||[]);
@@ -247,6 +255,6 @@ const Estate = (() => {
     if(review==='missing')selected=selected.filter(r=>!r.end);
     return {base,missing,aged,bands,selected:[...selected].sort((a,b)=>(a.orderDate||'9999').localeCompare(b.orderDate||'9999')||a.id.localeCompare(b.id))};
   }
-  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
+  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareSegment,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
 })();
 if(typeof module!=='undefined')module.exports=Estate;
