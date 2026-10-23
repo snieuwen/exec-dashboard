@@ -1,6 +1,6 @@
 {
   "name": "@snieuwen/exec-dashboard",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Customer-neutral, offline executive estate dashboard core",
   "license": "GPL-3.0-only",
   "engines": {
@@ -18,14 +18,17 @@
     "vendor",
     "README.md",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "scripts/init-project.cjs",
+    "examples/local-project"
   ],
   "scripts": {
     "build": "node scripts/build.cjs",
     "test": "node --test tests/*.test.cjs",
     "test:browser": "node tests/browser.cjs",
     "check:privacy": "node scripts/check-repository.cjs",
-    "check": "npm test && npm run check:privacy && npm run build"
+    "check": "npm test && npm run check:privacy && npm run build",
+    "init:project": "node scripts/init-project.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

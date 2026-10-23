@@ -28,3 +28,9 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.tmp
+
+# Include only the neutral customer starter inside ignored folder names.
+!examples/local-project/input/incoming/
+!examples/local-project/input/incoming/**
+!examples/local-project/outputs/
+!examples/local-project/outputs/**

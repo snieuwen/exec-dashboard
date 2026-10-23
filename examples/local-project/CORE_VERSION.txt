@@ -1,0 +1,2 @@
+0.8.0
+Keep the unchanged core in the external local working directory. Record its exact commit and runtime location in docs/Storage map.md.

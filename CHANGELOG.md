@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 — 2026-10-23
+
+- Ship a neutral customer folder starter with input/incoming/EIX, stage, outputs, backups, customizations and docs, plus version and storage instructions.
+- Add init-project to copy the starter into a new folder, refusing existing destinations. Include it in distributed packages; keep executable work outside synced customer storage.
+- Replace obsolete setup paths and hardware assumptions in the customer setup guide. No report calculations or customer files change.
+
 ## 0.7.1 — 2026-10-23
 
 - Label the Servers component group as Compute Servers within Engineered Systems. Database servers, Storage servers and Servers under other hardware remain unchanged.

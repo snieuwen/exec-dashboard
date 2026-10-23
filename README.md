@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.7.1** groups Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance hardware under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.8.0** includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -37,37 +37,31 @@ Support, subscriptions and one-time purchases remain separate. Quantities are gr
 
 ## Customer projects
 
-Create an ordinary local folder and open it as a Codex project. Download a fixed release of this shared core into `_core/`. Keep customer settings, styling, extensions, knowledge and files alongside it. Only the generic functionality is maintained in GitHub.
+The repository includes a [customer folder starter](examples/local-project) and a command to create it. Keep the downloaded, pinned core and executable work outside synced document storage, then run:
+
+```sh
+node scripts/init-project.cjs --output /path/to/new-customer-folder
+```
+
+The command refuses an existing destination and creates:
 
 ```text
-customer-project/
-  AGENTS.md               # Local instructions for Codex
-  CORE_VERSION.txt        # Exact shared core release used
-  _core/
-    exec-dashboard-0.3.0/ # Downloaded core; keep unchanged
-  customer.json           # Settings and cleansing rules
-  customer.css            # Optional customer theme
-  extension.js            # Optional trusted customer code
-  docs/                   # Contract interpretations and source references
-  data/                   # Inputs, or references to shared source files
-  outputs/                # Customer reports and manifests
+customer-folder/
+  AGENTS.md
+  CORE_VERSION.txt
+  input/incoming/EIX/        # Original exports
+  stage/                     # Cleansed data and lineage audit
+  outputs/                   # Versioned HTML and latest
+  backups/                   # Recovery copies
+  customizations/
+    customer.json            # Customer settings and extra cleansing
+  docs/
+    Storage map.md           # External runtime/work location
 ```
 
-From the local customer project folder, build using the downloaded core:
+Builders, dependencies, QA and temporary files belong in an external local working directory, mirroring the customer folder names. The starter contains documentation and neutral configuration only. It does not install a core, process an EIX workbook, generate reports or automate five-version retention.
 
-```sh
-node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
-```
-
-For a reproducible populated build, provide a prepared JSON source and its snapshot date:
-
-```sh
-node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
-```
-
-See [customer setup](docs/CUSTOMER_SETUP.md), [architecture](docs/ARCHITECTURE.md), [financial definitions](docs/FINANCIAL_BASIS.md) and [the example configuration](examples/customer-config.json).
-
-The repository URL identifies the shared source; it does not automatically make the code available locally. Download the chosen release once, then build and open reports offline. To upgrade, download a new version into a second folder, compare results and update `CORE_VERSION.txt` when satisfied.
+See [customer setup](docs/CUSTOMER_SETUP.md), [architecture](docs/ARCHITECTURE.md), [financial definitions](docs/FINANCIAL_BASIS.md) and [source preparation](docs/SOURCE_FORMAT.md).
 
 ## Verification
 

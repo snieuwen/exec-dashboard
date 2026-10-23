@@ -1,91 +1,46 @@
-# Set up a local customer project in Codex
+# Set up a customer dashboard project
 
-Use the shared private GitHub repository for generic functionality and an ordinary local Codex project for each customer. Users do not need their own GitHub repository, fork, Git installation or package manager for normal dashboard use.
+Download the generic core from [the shared repository](https://github.com/snieuwen/exec-dashboard) into an external local working directory, outside OneDrive. Use a fixed commit/archive and record its version and commit. Node.js 22 or later is required; builds work offline after download.
 
-## What you need
+## Create the standard structure
 
-- Codex and Node.js 22 or later.
-- Read access to [snieuwen/exec-dashboard](https://github.com/snieuwen/exec-dashboard) to download the shared core.
-- Access to the customer's source files, locally or through the agreed OneDrive/SharePoint location.
+From the downloaded core, run:
 
-Repository access and source-file access are separate. After the core is downloaded, builds and reports work offline.
+```sh
+node scripts/init-project.cjs --output /path/to/new-customer-folder
+```
 
-## 1. Create a local project folder
-
-Create an ordinary customer folder on your computer and open it as a local project in Codex:
+The destination must not exist. The command copies [examples/local-project](../examples/local-project), including:
 
 ```text
-customer-project/
+customer-folder/
   AGENTS.md
   CORE_VERSION.txt
-  _core/
-    exec-dashboard-0.3.0/
-  customer.json
-  customer.css             # Optional
-  extension.js             # Optional
-  docs/
-  data/
+  input/incoming/EIX/
+  stage/
   outputs/
+  backups/
+  customizations/customer.json
+  docs/Storage map.md
 ```
 
-The `_core` folder holds an unchanged copy of the generic functionality. Customer-specific work belongs outside it. The local project has no GitHub repository and no upload step.
+Git tracks the README files so the folders survive archive downloads. Source input is singular `input`, matching the established dashboard setup. Put raw EIX exports in input/incoming/EIX and leave them unchanged. Put cleansed matrices, exclusion audit and original source lineage in stage. Keep customer configuration, themes, logos and documented exceptions in customizations. Optional themeFile and extensionFile paths resolve relative to customizations/customer.json; executable extensions should reference the external working location.
 
-## 2. Download a fixed core version
+Keep builders, scripts, dependencies, temporary files and QA outside synced storage, for example under `C:/Temp/Executive Dashboards/<customer>/`, with matching working subfolders. Keep unchanged core copies under that local work root's `_core/`. Record the exact paths and commit in docs/Storage map.md. The starter itself installs no runtime and processes no customer data.
 
-While signed in to GitHub, open [v0.3.0](https://github.com/snieuwen/exec-dashboard/tree/v0.3.0), choose **Code → Download ZIP**, and extract it under `_core/`. The extracted folder should be `_core/exec-dashboard-0.3.0/`.
+## Configure and build
 
-Write `v0.3.0` in `CORE_VERSION.txt`. For additional traceability, record the commit resolved by the immutable release tag as well.
+Edit customizations/customer.json for the customer name, reporting currency and scope. Document exceptions, contract sources and dated FX separately. The mandatory generic hardware policy treats support as annual, prefers same-row support currency for acquisition with order-currency fallback, and calculates blank acquisitions as zero while preserving source blanks. Generic scope cleansing always removes Inactive and past-end rows using the export date, including unsupported perpetual licences outside scope. Extra cleansing belongs to the customer configuration.
 
-The repository URL alone does not install or mount the shared code. Codex needs this downloaded copy to run the builder locally. Use a fixed release rather than the moving main branch for formal reports. The instructions on main are the current setup guide; older release archives retain their original documentation.
-
-## 3. Set up customer files
-
-Copy `_core/exec-dashboard-0.3.0/examples/customer-config.json` to `customer.json` in the local project root. Set the customer label, title, reporting currency and source-scope statement. Keep source references and contract interpretations in `docs/`.
-
-Document financial assumptions before enabling them. Defaults exclude unconfirmed hardware fees from annual totals and retain order currency for acquisition values. Supported cleansing actions are trim, exclude and replace. Columns use exact source header names; rules may target one sheet. Matching ignores case and surrounding spaces.
-
-For customer presentation, create `customer.css` and set `themeFile` to `customer.css` in customer.json. CSS must be self-contained; imports and URLs are rejected. For additional logic, create `extension.js` and set `extensionFile` to `extension.js`. Paths resolve relative to customer.json. The [extension API](ARCHITECTURE.md#customer-extension-api) describes the supported hook. Contract notes are descriptive; executable contract calculations need separately tested customer extensions or tools.
-
-Put source files in `data/`, or document their shared location. Put reports in `outputs/`. Neither belongs under `_core/`.
-
-## 4. Give Codex local project instructions
-
-Create `AGENTS.md` in the local project root using the text below. A reusable copy is in [the current local-project example](../examples/local-project/AGENTS.md).
-
-```markdown
-# Local customer dashboard project
-
-- Shared core: https://github.com/snieuwen/exec-dashboard.
-- Read CORE_VERSION.txt to identify the downloaded version under _core/.
-- Use the downloaded core builder; keep _core/ unchanged.
-- Keep customer settings in customer.json, optional presentation in customer.css,
-  optional additional logic in extension.js, and project knowledge in docs/.
-- Store source files in data/ or the agreed document store and reports in outputs/.
-- Do not create a customer GitHub repository or upload customer files to the core.
-- Document contract interpretations, source references, effective dates and assumptions.
-- Check source counts, totals and supporting evidence after each source refresh.
-- Upgrade the shared core only when requested; compare old and new outputs first.
-```
-
-These instructions describe the local customer workspace for new Codex chats. The downloaded core also contains its own maintenance instructions for files inside `_core/`.
-
-## 5. Build and open the dashboard
-
-From the local customer project root, run:
+Invoke the external core builder with explicit customer paths:
 
 ```sh
-node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --output outputs/dashboard.html
+node /path/to/local-core/scripts/build.cjs --config /path/to/customer-folder/customizations/customer.json --source /path/to/customer-folder/stage/source.json --snapshot 2026-01-31 --output /path/to/customer-folder/outputs/dashboard_v1.0.0.html
 ```
 
-Open `outputs/dashboard.html` in Chrome or Edge. Choose **Open Source data file** to load a processed `.xlsx` workbook containing `sw-details` and `hw-details`. Use **Save report** to preserve the loaded source and settings in a new local HTML file.
+Omit --source and --snapshot for an empty report. Raw EIX exports require preparation into the documented source layout; the initializer does not provide a raw-workbook intake pipeline. See [SOURCE_FORMAT.md](SOURCE_FORMAT.md). Browser loading supports processed workbooks in that layout.
 
-For a reproducible populated build, supply a prepared JSON source and its snapshot date:
-
-```sh
-node _core/exec-dashboard-0.3.0/scripts/build.cjs --config customer.json --source data/source.json --snapshot 2026-01-31 --output outputs/dashboard.html
-```
-
-The adjacent manifest records source/configuration fingerprints and core version. Archive it with the report and the exact input file version. See the [source guide](SOURCE_FORMAT.md) for optional workbook preparation; Python is not required to build an empty report and load a processed workbook through the browser.
+Back up existing HTML and manifests before generating replacements. Use a fresh numbered version, verify source counts, totals, views, evidence and customizations, then copy the newest verified report to an identical latest HTML. Retain the last five numbered versions and their manifests; preserve retired copies under backups. The initializer documents this release policy; it does not automate publishing or retention. Do not use the low-level builder to overwrite a published version.
 
 ## Configuration
 
@@ -104,7 +59,7 @@ The adjacent manifest records source/configuration fingerprints and core version
 
 ## Update the core
 
-Local projects do not update automatically. Download the chosen new release into a second versioned folder under `_core/`, retaining the previous version. Build a candidate report with the same customer settings and inputs, using a separate output filename. Compare totals, source-row counts, affected views, exports and customer calculations. When satisfied, update CORE_VERSION.txt and use the new builder path. Retain the previous version while older reports need to be reproduced.
+Local projects do not update automatically. Download the chosen new release into a second versioned folder under the external working directory’s `_core/`, retaining the previous version. Build a candidate report with the same customer settings and inputs, using a separate output filename. Compare totals, source-row counts, affected views, exports and customer calculations. When satisfied, update CORE_VERSION.txt and use the new builder path. Retain the previous version while older reports need to be reproduced.
 
 Reusable functionality is maintained centrally. Customer settings and extensions stay outside `_core/`, so replacing or upgrading the downloaded core does not overwrite them.
 
