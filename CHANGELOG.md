@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 — 2026-10-23
+
+- Label the Servers component group as Compute Servers within Engineered Systems. Database servers, Storage servers and Servers under other hardware remain unchanged.
+
 ## 0.7.0 — 2026-10-23
 
 - Group Exadata, Exalogic Elastic Cloud, Private Cloud Appliance and Recovery Appliance hardware under Engineered Systems using product names and detailed FPH hierarchy, preserving component groups and raw evidence.

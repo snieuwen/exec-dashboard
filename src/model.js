@@ -33,7 +33,7 @@ const Estate = (() => {
     const engineered=/\bexadata\b|\bexa\s+data\b|\bexalogic\b|\bexa\s+logic\b|\bprivate\s+cloud\s+appliance\b|\bpca\b|\brecovery\s+appliance\b|\bzdlra\b/;
     return labels.some(label=>engineered.test(label))?'Engineered Systems':'Other hardware';
   }
-  function hardwareGroup(product){
+  function hardwareGroup(product,segment){
     const p=text(product);
     if(/model family/i.test(p))return 'System families / configuration references';
     if(/switch/i.test(p))return 'Networking — switches and switch kits';
@@ -44,7 +44,7 @@ const Estate = (() => {
     if(/\bDIMM\b|memory expansion|memory kit|memory module/i.test(p))return 'Memory';
     if(/storage server/i.test(p))return 'Storage servers';
     if(/database server/i.test(p)&&!/rack/i.test(p))return 'Database servers';
-    if(/\bserver\b/i.test(p)&&!/rack/i.test(p))return 'Servers';
+    if(/\bserver\b/i.test(p)&&!/rack/i.test(p))return segment==='Engineered Systems'?'Compute Servers':'Servers';
     if(/drive enclosure/i.test(p))return 'Storage enclosures';
     if(/disk drive|solid.state|\bSSD\b|\bHDD\b|\bSAS.*drive|\bNVMe.*drive/i.test(p))return 'Storage drives';
     if(/\bprocessor|\bCPU\b|\bXeon\b/i.test(p))return 'Processors';
@@ -86,7 +86,7 @@ const Estate = (() => {
           start:date(r[sw?30:32]),end:date(r[sw?31:33]),orderDate:date(r[sw?28:21]),order:text(r[sw?27:19]),contract:text(r[sw?32:53])||(cloud?text(r[47]):''),csi:text(r[sw?34:52]),instance:text(r[sw?35:51]),subId:cloud?text(r[44]):'',plan:cloud?text(r[45]):'',operation:cloud?text(r[61]):'',pricing:cloud?text(r[68]):'',
           originalPurchase:sw&&!cloud?numeric(r[37]):null,purchaseCurrency:sw?text(r[42]):'',originalAnnual:sw?numeric(r[41]):null,supportCurrency:sw?text(r[43]):'',hwPurchase:!sw?(r[29]==null||String(r[29]).trim()===''?0:numeric(r[29])):null,hwPurchaseSource:!sw?numeric(r[29]):null,hwPurchaseMissing:!sw&&numeric(r[29])===null,hwPurchaseAssumedZero:!sw&&(r[29]==null||String(r[29]).trim()===''),hwOrderCurrency:!sw?text(r[62]):'',hwSupportCurrency:!sw&&numeric(r[55])!==null?'USD':'',flags:[]};
         item.annualSupport=sw?item.support:item.hardware;
-        item.productGroup=sw?(item.family||item.segment):hardwareGroup(item.product);
+        item.productGroup=sw?(item.family||item.segment):hardwareGroup(item.product,item.segment);
         const entitlement=licenseEntitlement(item);if(entitlement.issue)item.flags.push(entitlement.issue);
         if(entitlement.kind!=='regular'&&!item.order)item.flags.push('ULA order number missing: source rows kept separate');
         if(item.country==='Unassigned')item.flags.push('Country missing');
