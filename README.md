@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.8.0** includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.8.1** includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -29,7 +29,7 @@ The source layout is defined in [`schemas/eix-columns.json`](schemas/eix-columns
 - Recent purchases, hardware aging and contract renewal grouping.
 - Source-wide entity directory, data review flags and financial assumptions.
 - Dated currency conversion, original-currency evidence and user-entered rates.
-- Browser workbook refresh, CSV exports, current-page printing and complete saved HTML reports.
+- Browser workbook refresh, CSV exports, current-page printing and complete saved HTML reports. Saved reports open without selection filters, retaining currency and dated exchange rates.
 - Configurable cleansing, contract notes and external customer extensions.
 - Reproducible build identifiers and source/configuration fingerprints.
 

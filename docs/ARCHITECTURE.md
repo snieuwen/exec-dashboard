@@ -50,3 +50,7 @@ Private repository access is required to download or update the core. After down
 ## ULA quantity presentation
 
 The shared model exposes licenseEntitlement(record), derived only from software License Level and the original quantity. The shared ReportQuantities renderer separates these records in quantity mode, reusing the existing pivot classes, expand/collapse actions and source-detail hooks. Financial mode bypasses this split. Customers consume this behavior by upgrading the unchanged core release; no customer-specific ULA renderer is required.
+
+## Opening and saving report selections
+
+Selection filters are temporary browser interactions. Every opening clears them using the same defaults as Reset filter, including legacy report-config values. Save report embeds the complete cleansed source and cleared selection defaults without changing the current view. Reporting currency, dated FX rates and their origins remain embedded. This changes presentation scope only; mandatory source cleansing is unchanged. Existing HTML files contain their own code and require a rebuild with the updated core to receive the fix.

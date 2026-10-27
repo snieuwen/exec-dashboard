@@ -24,7 +24,30 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   await page.screenshot({path:path.join(qa,'generic-atlas.png'),fullPage:true});
   await page.locator('.nav [data-view="data"]').click();assert(!(await page.locator('#main').innerText()).includes('${esc('));await page.locator('#fx-currency').selectOption('EUR');await page.locator('#rate').fill('0.8');await page.locator('#rate-date').fill('2026-01-31');await page.locator('#apply-rate').click();await page.locator('.nav [data-view="overview"]').click();await page.locator('#currency').selectOption('EUR');
   await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
-  const [saved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const savedPath=path.join(tmp,'saved.html');await saved.saveAs(savedPath);const savedHtml=fs.readFileSync(savedPath,'utf8');const cleanedEmbedded=JSON.parse(savedHtml.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(cleanedEmbedded['sw-details'].length,3);assert.equal(cleanedEmbedded['hw-details'].length,2);assert(!JSON.stringify(cleanedEmbedded).includes('Historical hardware entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Other Example Entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired software entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired hardware entity'));assert.equal(cleanedEmbedded['sw-details'][2][31].date,'2026-01-31');const p2=await browser.newPage();p2.on('pageerror',e=>errors.push(e.message));await p2.goto(pathToFileURL(savedPath).href);await p2.locator('.report-notice').waitFor();assert.equal(await p2.locator('#currency').inputValue(),'EUR');await p2.close();
+  // Saving a narrowed view must not make recipients reopen that selection.
+  await page.locator('#area').selectOption('Hardware');
+  assert.match(await page.locator('#announcement').innerText(),/1 active source records selected/);
+  const [saved]=await Promise.all([page.waitForEvent('download'),page.locator('#save-report').click()]);const savedPath=path.join(tmp,'saved.html');await saved.saveAs(savedPath);const savedHtml=fs.readFileSync(savedPath,'utf8');const cleanedEmbedded=JSON.parse(savedHtml.match(/id="report-source" type="application\/json">(.*?)<\/script>/s)[1]);assert.equal(cleanedEmbedded['sw-details'].length,3);assert.equal(cleanedEmbedded['hw-details'].length,2);assert(!JSON.stringify(cleanedEmbedded).includes('Historical hardware entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Other Example Entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired software entity'));assert(!JSON.stringify(cleanedEmbedded).includes('Expired hardware entity'));assert.equal(cleanedEmbedded['sw-details'][2][31].date,'2026-01-31');const p2=await browser.newPage();p2.on('pageerror',e=>errors.push(e.message));await p2.goto(pathToFileURL(savedPath).href);await p2.locator('.report-notice').waitFor();assert.equal(await p2.locator('#currency').inputValue(),'EUR');
+  await p2.locator('.nav [data-view="overview"]').click();
+  assert.match(await p2.locator('#announcement').innerText(),/3 active source records selected/);
+  assert.equal(Number(await p2.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
+  assert.equal(await p2.locator('#area').inputValue(),'');
+  assert.match(await page.locator('#announcement').innerText(),/1 active source records selected/);
+  const savedConfig=JSON.parse(savedHtml.match(/id="report-config" type="application\/json">(.*?)<\/script>/s)[1]);
+  assert.equal(savedConfig.area,'');assert.equal(savedConfig.window,'');assert.equal(savedConfig.rates.EUR,0.8);assert.equal(savedConfig.rateDates.EUR,'2026-01-31');
+  // Old saved configurations may contain any drilldown, including the renewal window.
+  const legacyConfig={...savedConfig,area:'Hardware',country:'missing',entity:'missing',segment:'missing',query:'missing',window:'Next 90 days',month:'1900-01',contract:'missing',flag:'missing',financial:'subscription',environment:'missing',agingScope:'other',agingBand:'missing',agingReview:'missing',asof:'1900-01-01'};
+  const legacyPath=path.join(tmp,'legacy-filtered.html');
+  fs.writeFileSync(legacyPath,savedHtml.replace(/(<script id="report-config" type="application\/json">).*?(<\/script>)/s,(_,open,close)=>open+JSON.stringify(legacyConfig)+close));
+  await p2.goto(pathToFileURL(legacyPath).href);await p2.locator('.report-notice').waitFor();
+  for(let opening=0;opening<2;opening++){
+   await p2.locator('.nav [data-view="overview"]').click();
+   assert.match(await p2.locator('#announcement').innerText(),/3 active source records selected/);
+   assert.equal(Number(await p2.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
+   await p2.locator('#reset').click();assert.match(await p2.locator('#announcement').innerText(),/3 active source records selected/);
+   if(opening===0)await p2.reload();
+  }
+  await p2.close();await page.locator('#reset').click();
   await page.setViewportSize({width:390,height:844});for(const view of ['overview','atlas','data']){await page.locator('.nav [data-view="'+view+'"]').click();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),view+' mobile overflow');}
   await page.screenshot({path:path.join(qa,'generic-mobile.png'),fullPage:true});
   // A separate customer configuration survives source refresh and saved copies.

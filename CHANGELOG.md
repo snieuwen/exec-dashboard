@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 — 2026-10-27
+
+- Open reports at full cleansed source scope instead of restoring temporary filters from a saved view, including renewal windows and drilldowns. Keep currency and dated exchange rates.
+- Save reports with cleared selection filters without changing the current screen selection. Share opening and Reset filter defaults, and cover saved/legacy configurations and repeated openings with browser regression tests.
+
 ## 0.8.0 — 2026-10-23
 
 - Ship a neutral customer folder starter with input/incoming/EIX, stage, outputs, backups, customizations and docs, plus version and storage instructions.
