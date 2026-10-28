@@ -3,6 +3,7 @@
 The core is an estate interpretation tool. It does not establish actual use, entitlement compliance, renewal pricing or future payment obligations.
 
 - Financial reporting selects Active source status. The entity directory may also show other statuses.
+- The Total software licence investment KPI excludes historical investment in earlier ULA agreements that became inactive when renewed or superseded. Its explanatory text makes this limitation explicit; it does not reconstruct lifetime investment.
 - Original software acquisition, annual software support, subscriptions and hardware acquisition are separate measures. Historical purchases are not added to annual recurring fees.
 - Software support uses the source Annualized Support Fee - USD column. Cloud and Java SE subscriptions use the subscription basis represented by that source field.
 - Hardware Support Fees (USD) is always treated as annual. This is a shared reporting assumption, not a claim that the source period was confirmed. Legacy hardwareSupportAnnual=false cannot disable this policy.

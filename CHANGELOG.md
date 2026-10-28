@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2 — 2026-10-28
+
+- Clarify the Total software licence investment KPI: recorded purchase values on active records exclude historical investment in earlier ULA agreements made inactive by renewal or supersession. Calculations and cleansing remain unchanged.
+
 ## 0.8.1 — 2026-10-27
 
 - Open reports at full cleansed source scope instead of restoring temporary filters from a saved view, including renewal windows and drilldowns. Keep currency and dated exchange rates.
