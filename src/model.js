@@ -130,7 +130,27 @@ const Estate = (() => {
   function renewals(rs){return group(rs,r=>JSON.stringify([r.contract||r.id,r.end||'Unknown'])).map(g=>({...g,contract:g.rows[0].contract,end:g.rows[0].end,entities:[...new Set(g.rows.map(r=>r.entity))],countries:[...new Set(g.rows.map(r=>r.country))],unidentified:!g.rows[0].contract,ambiguous:g.rows[0].contract.includes(';')})).sort((a,b)=>(a.end||'9999').localeCompare(b.end||'9999'));}
   function monthsBefore(asof,months){const d=new Date(asof+'T00:00:00Z'),dayOfMonth=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-Number(months));const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(dayOfMonth,last));return d.toISOString().slice(0,10);}
   function recent(rs,months,asof){const from=monthsBefore(asof,months);return rs.filter(r=>r.orderDate&&r.orderDate>=from&&r.orderDate<=asof);}
-  function select(rs,state){return rs.filter(r=>(!state.environment||r.environment===state.environment)&&(!state.financial||measure(r,state.financial)!==null)&&(!state.area||r.area===state.area)&&(!state.country||r.country===state.country)&&(!state.entity||r.entity===state.entity)&&(!state.segment||r.segment===state.segment)&&(!state.window||renewalWindow(r,state.asof)===state.window)&&(!state.month||r.end.slice(0,7)===state.month)&&(!state.contract||r.contract===state.contract)&&(!state.flag||r.flags.includes(state.flag))&&(!state.query||[r.id,r.product,r.entity,r.country,r.order,r.contract,r.csi,r.subId,r.part].join(' ').toLowerCase().includes(state.query.toLowerCase())));}
+  const presetValue=id=>'@organisation:'+id;
+  function organizationMatches(record,preset){return (preset.entities||[]).includes(record.entity)||(preset.parties||[]).includes(record.party);}
+  function organizationPresets(rows){
+    return (config.organizationPresets||[]).map(preset=>{
+      const matches=rows.filter(r=>organizationMatches(r,preset));
+      return {...preset,value:presetValue(preset.id),active:matches.filter(r=>r.status==='Active').length,entities:[...new Set(matches.map(r=>r.entity))].sort()};
+    });
+  }
+  function entityMatches(record,value){
+    if(!value)return true;
+    if(record.entity===value)return true;
+    const preset=(config.organizationPresets||[]).find(p=>presetValue(p.id)===value);
+    return !!preset&&organizationMatches(record,preset);
+  }
+  function evidenceMatches(record,query){
+    const fold=value=>text(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+    const fields=['id','product','entity','country','order','contract','csi','subId','part','party','family','productGroup','metric','licenseLevel','licenseType','agreement','instance','term','status','area','segment','start','end','orderDate'].map(key=>fold(record[key]));
+    const terms=[...text(query).matchAll(/"([^"]+)"|(\S+)/g)].map(match=>fold(match[1]||match[2])).filter(Boolean);
+    return terms.every(term=>fields.some(field=>field.includes(term)));
+  }
+  function select(rs,state){return rs.filter(r=>(!state.environment||r.environment===state.environment)&&(!state.financial||measure(r,state.financial)!==null)&&(!state.area||r.area===state.area)&&(!state.country||r.country===state.country)&&entityMatches(r,state.entity)&&(!state.segment||r.segment===state.segment)&&(!state.window||renewalWindow(r,state.asof)===state.window)&&(!state.month||r.end.slice(0,7)===state.month)&&(!state.contract||r.contract===state.contract)&&(!state.flag||r.flags.includes(state.flag))&&(!state.query||evidenceMatches(r,state.query)));}
   function entityRegister(allRows,{mode='active',query=''}={}){
     const search=query.trim().toLowerCase();
     return group(allRows,'entity').map(g=>{
@@ -255,6 +275,6 @@ const Estate = (() => {
     if(review==='missing')selected=selected.filter(r=>!r.end);
     return {base,missing,aged,bands,selected:[...selected].sort((a,b)=>(a.orderDate||'9999').localeCompare(b.orderDate||'9999')||a.id.localeCompare(b.id))};
   }
-  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareSegment,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
+  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,presetValue,organizationMatches,organizationPresets,evidenceMatches,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareSegment,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
 })();
 if(typeof module!=='undefined')module.exports=Estate;

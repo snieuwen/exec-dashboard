@@ -199,3 +199,26 @@ test('ULA order information controls carry an entity-scoped key and never add pr
    const row=Array(64).fill('');row[11]=family;row[4]='Memory DIMM';assert.equal(E.hardwareSegment(row),'Other hardware',family);
   }
  });
+
+ test('organisation presets match exact names or party IDs, intersect filters and retain empty definitions',()=>{
+  const source=fixture(),before=JSON.stringify(source);source['hw-details'][1][37]='123';
+  E.configure({organizationPresets:[{id:'operations',label:'Operations',entities:['Example Entity'],parties:['123']},{id:'empty',label:'Unmapped division',entities:[]}]});
+  const rows=E.normalize(source),catalogue=E.organizationPresets(rows);assert.equal(catalogue.length,2);assert.equal(catalogue[0].active,3);assert.deepEqual(catalogue[0].entities,['Example Entity']);assert.equal(catalogue[1].active,0);
+  assert.equal(E.select(rows,{entity:E.presetValue('operations')}).length,3);assert.equal(E.select(rows,{entity:E.presetValue('operations'),area:'Hardware'}).length,1);assert.equal(E.select(rows,{entity:E.presetValue('empty')}).length,0);assert.equal(E.select(rows,{entity:'Example Entity'}).length,3);assert.equal(E.select(rows,{entity:'@organisation:unknown'}).length,0);
+  const changed=[...rows,{...rows[0],entity:'Unmapped source name',party:'unmapped'}];assert.equal(E.select(changed,{entity:E.presetValue('operations')}).length,3);
+  const renamed={...rows[2],entity:'Renamed source',party:'123'};assert.equal(E.select([renamed],{entity:E.presetValue('operations')}).length,1);
+  E.configure({});assert.deepEqual(E.organizationPresets(rows),[]);
+  assert.throws(()=>R.validateConfig({schemaVersion:1,organizationPresets:[{id:'x',label:'X'},{id:'x',label:'Duplicate'}]}),/unique ids/);
+  assert.throws(()=>R.validateConfig({schemaVersion:1,organizationPresets:[{id:'x',label:'X',entities:'bad'}]}),/array/);
+ });
+ test('evidence search combines fields with AND terms, quoted phrases and accent-insensitive matching',()=>{
+  E.configure({});const rows=E.normalize(fixture()),before=JSON.stringify(rows);
+  assert.equal(E.select(rows,{query:'database GERMANY TEST-ORDER-A'}).length,1);
+  assert.equal(E.select(rows,{query:'  TEST-CSI  storage '}).length,1);
+  assert.equal(E.select(rows,{query:'TEST-ORDER-A TEST-ORDER-H'}).length,0);
+  assert.equal(E.select(rows,{query:'"Example database" Germany'}).length,1);
+  assert.equal(E.select(rows,{query:'"database Example"'}).length,0);
+  assert.equal(E.select(rows,{query:'   '}).length,3);
+  assert(E.evidenceMatches({...rows[0],entity:'Société Example',party:'party-123',licenseLevel:'Capped ULA'},'societe party-123 "Capped ULA"'));
+  assert.equal(JSON.stringify(rows),before);
+ });

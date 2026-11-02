@@ -48,6 +48,16 @@ const DashboardRules=(()=>{
   if(!config||typeof config!=='object'||Array.isArray(config))throw Error('Configuration must be an object.');
   if(config.schemaVersion!==1)throw Error('Configuration schemaVersion must be 1.');
   if(config.reportCurrency&&!['USD','AUD','BRL','CHF','CNY','EUR','GBP','INR','JPY','MXN','PLN','SAR','SGD','TRY'].includes(config.reportCurrency))throw Error('Unsupported report currency.');
+  if(config.organizationPresets!==undefined){
+   if(!Array.isArray(config.organizationPresets))throw Error('organizationPresets must be an array.');
+   const ids=new Set();
+   for(const preset of config.organizationPresets){
+    if(!preset||typeof preset.id!=='string'||!preset.id.trim()||ids.has(preset.id)||typeof preset.label!=='string'||!preset.label.trim())throw Error('Organisation presets require unique ids and nonempty labels.');
+    ids.add(preset.id);
+    for(const key of ['entities','parties'])if(preset[key]!==undefined&&(!Array.isArray(preset[key])||!preset[key].every(x=>typeof x==='string'&&x.trim())))throw Error('Organisation preset '+key+' must be an array of nonempty strings.');
+    if(preset.description!==undefined&&typeof preset.description!=='string')throw Error('Organisation preset description must be text.');
+   }
+  }
   const f=config.financial||{};
   if(f.hardwareSupportAnnual!==undefined&&typeof f.hardwareSupportAnnual!=='boolean')throw Error('hardwareSupportAnnual must be boolean.');
   for(const key of ['hardwarePurchaseCurrency','softwarePurchaseCurrency'])if(f[key]&&!['order','support'].includes(f[key]))throw Error('Invalid financial currency preference.');

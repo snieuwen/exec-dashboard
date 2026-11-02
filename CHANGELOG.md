@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0 — 2026-11-02
+
+- Make Organisation / source entity and its organisation presets section generic and consistently English, including no-mapping placeholders. Configure exact source names or party IDs outside the core; preserve source names and rows.
+- Search evidence across multiple fields with all-word matching, optional quoted phrases and case/accent-insensitive matching.
+
 ## 0.8.2 — 2026-10-28
 
 - Clarify the Total software licence investment KPI: recorded purchase values on active records exclude historical investment in earlier ULA agreements made inactive by renewal or supersession. Calculations and cleansing remain unchanged.

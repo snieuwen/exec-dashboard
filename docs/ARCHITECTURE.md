@@ -54,3 +54,5 @@ The shared model exposes licenseEntitlement(record), derived only from software 
 ## Opening and saving report selections
 
 Selection filters are temporary browser interactions. Every opening clears them using the same defaults as Reset filter, including legacy report-config values. Save report embeds the complete cleansed source and cleared selection defaults without changing the current view. Reporting currency, dated FX rates and their origins remain embedded. This changes presentation scope only; mandatory source cleansing is unchanged. Existing HTML files contain their own code and require a rebuild with the updated core to receive the fix.
+
+Organisation presets are generic model and filter behaviour. Customer-only mapping lists live in organizationPresets configuration and are matched by exact source name or party ID. No customer extension should replace or translate the shared top filter. Source-based presets filter existing records without consolidating entity names or financial records. See ORGANISATION_PRESETS.md.

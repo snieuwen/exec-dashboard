@@ -9,3 +9,5 @@
 - Keep executable builders, helpers, dependencies, QA, temporary files and intermediate builds outside OneDrive, under the agreed local work root with matching customer folders. Never create Python/JS scripts, bytecode or node_modules in synced customer storage.
 - Do not create a customer GitHub repository or upload customer data, reports or branding to the generic core.
 - Verify counts, financial totals, source evidence and customizations after each refresh. Upgrade core explicitly; compare results before publishing.
+
+- All dashboard UI labels and preset descriptions must be English. Configure organisation presets from documented organisation/source characteristics in organizationPresets; leave uncertain mappings empty and listed. Preserve original source names and their language.

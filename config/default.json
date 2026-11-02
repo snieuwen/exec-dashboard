@@ -12,5 +12,6 @@
   "cleansing": [],
   "reviewEntities": [],
   "contractNotes": [],
-  "fxDefaults": {}
+  "fxDefaults": {},
+  "organizationPresets": []
 }
