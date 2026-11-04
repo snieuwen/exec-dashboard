@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.8.2** clarifies that the software investment KPI excludes earlier ULA agreements made inactive by renewal or supersession. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.10.0** adds the approved Oracle GLAS logo to the shared header on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -106,3 +106,7 @@ A populated source requires an explicit valid export date. CLI --snapshot suppli
 ULA order rows include an accessible information button after the order label. It opens all retained source lines for that order and entity, including non-ULA products on the same order, with financial values, original source fields and original row references. It does not expand the pivot; ULA product rows remain terminal.
 
 Organisation presets and multi-field evidence search are shared core features. See [configuration and matching rules](docs/ORGANISATION_PRESETS.md). All generated interface labels are English; original source names keep their source language.
+
+## Shared GLAS header
+
+The Oracle Global Licensing Advisory Services logo appears in the shared top-right header on every report section. The supplied logo is embedded in the standalone HTML and saved reports, with no external image request. Customer branding remains separate.

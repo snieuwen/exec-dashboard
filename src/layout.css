@@ -109,3 +109,17 @@ button.subtle,.data-table .link{color:#545454}.chips button{background:#f2f2f2}.
 .nav button{color:#333}.nav button[aria-current=page]{background:#ddd;color:#111;box-shadow:inset 3px 0 #555}.nav button:hover{background:#e6e6e6;color:#111}
 .topline{border-top:0}button.primary,.tabs button.active{background:#333;border-color:#333;color:#fff}.stat{border-top:1px solid #ddd}
 .empty-start{margin-bottom:20px;padding:20px;border:1px solid #ccc;background:#fff}.empty-start h2{margin-bottom:8px}
+
+/* Shared GLAS header: embedded asset, responsive layout, persistent across report sections. */
+@media screen {
+
+.topline{display:grid;grid-template-columns:minmax(0,1fr) 180px;grid-template-rows:auto auto;column-gap:24px;row-gap:8px;align-items:center;padding:10px 32px;background:#fff}
+.topline>div:first-child{grid-column:1;grid-row:1}
+.topline .top-actions{grid-column:1;grid-row:2;justify-content:flex-start;flex-wrap:wrap}
+.topline .glas-header-brand{grid-column:2;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;border-left:1px solid #e6e8eb;padding-left:14px}
+.glas-header-brand img{display:block;width:180px;max-width:100%;height:auto;object-fit:contain}
+.topline .customer-release{grid-column:1;grid-row:1;justify-self:end;font-size:10px;margin:0}
+@media(max-width:1100px){.topline{column-gap:14px;padding:10px 20px;grid-template-columns:minmax(0,1fr) 155px}.topline .customer-release{grid-row:3;justify-self:start}.topline .glas-header-brand{grid-row:1/4}.glas-header-brand img{width:155px}}
+@media(max-width:600px){.topline{grid-template-columns:minmax(0,1fr) 130px;padding:10px 14px}.topline>div:first-child{font-size:11px}.topline .top-actions{grid-column:1/3;grid-row:3;gap:6px}.topline .customer-release{grid-row:2}.topline .glas-header-brand{grid-row:1/3;padding-left:8px}.glas-header-brand img{width:130px}}
+
+}

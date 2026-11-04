@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 — 2026-11-04
+
+- Add the Oracle GLAS logo to the shared top-right header on every report section, using the approved compact layout and divider.
+- Embed the supplied logo in HTML for offline use and saved reports; adapt the header and controls to smaller screens.
+- Preserve customer configuration, source data and financial calculations.
+
 ## 0.9.0 — 2026-11-02
 
 - Make Organisation / source entity and its organisation presets section generic and consistently English, including no-mapping placeholders. Configure exact source names or party IDs outside the core; preserve source names and rows.

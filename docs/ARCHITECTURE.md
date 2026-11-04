@@ -56,3 +56,7 @@ The shared model exposes licenseEntitlement(record), derived only from software 
 Selection filters are temporary browser interactions. Every opening clears them using the same defaults as Reset filter, including legacy report-config values. Save report embeds the complete cleansed source and cleared selection defaults without changing the current view. Reporting currency, dated FX rates and their origins remain embedded. This changes presentation scope only; mandatory source cleansing is unchanged. Existing HTML files contain their own code and require a rebuild with the updated core to receive the fix.
 
 Organisation presets are generic model and filter behaviour. Customer-only mapping lists live in organizationPresets configuration and are matched by exact source name or party ID. No customer extension should replace or translate the shared top filter. Source-based presets filter existing records without consolidating entity names or financial records. See ORGANISATION_PRESETS.md.
+
+## Shared GLAS branding
+
+The user-supplied Oracle GLAS logo is stored unchanged in src/assets/oracle-glas.png and embedded as a data URL by scripts/build.cjs. The shared report header displays it across all sections and retains it in saved HTML. This is shared service branding; customer logos and data remain outside the repository. Screen media rules make room for the logo and wrap the controls on narrow screens.
