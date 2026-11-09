@@ -121,6 +121,36 @@ const Estate = (() => {
   function aggregate(rs){const annualSupport=total(rs,'annualSupport'),subscription=total(rs,'subscription');return {purchase:total(rs,'purchase'),support:total(rs,'support'),annualSupport,subscription,hardware:total(rs,'hardware'),annual:(annualSupport??0)+(subscription??0),lines:rs.length};}
   function measure(r,m){return m==='annual'?(r.annualSupport??r.subscription):r[m];}
   function group(rs,key){const g=new Map();for(const r of rs){const k=typeof key==='function'?key(r):r[key];if(!g.has(k))g.set(k,[]);g.get(k).push(r);}return [...g].map(([name,rows])=>({name,rows,...aggregate(rows)}));}
+
+  // Identifiers remain literal: ambiguous multi-ID cells are never split or fee-allocated.
+  const originProductKey=r=>JSON.stringify([r.product,r.part,r.metric,r.term]);
+  const originInScope=(r,scope)=>scope==='hardware'?r.kind==='Hardware':scope==='subscriptions'?['Subscription','Technology subscription'].includes(r.kind):r.kind==='Software licence';
+  function productOrigins(rs,{groupBy='order',scope='software',products=[],anchorIds=null,minShare=0,sort='share'}={}){
+    if(!['order','csi','contract'].includes(groupBy))groupBy='order';
+    const keys=new Set(products),anchors=anchorIds===null?null:new Set(anchorIds),fee=scope==='subscriptions'?'subscription':scope==='hardware'?'hardware':'support';
+    const sum=rows=>rows.some(r=>r[fee]===null||r[fee]===undefined||!Number.isFinite(r[fee]))?null:rows.reduce((n,r)=>n+r[fee],0);
+    const ids=(rows,key)=>[...new Set(rows.map(r=>r[key]).filter(Boolean))].sort();
+    const groups=group(rs,r=>r[groupBy]?JSON.stringify(['id',r[groupBy]]):JSON.stringify(['missing',r.id])).map(g=>{
+      const rows=g.rows,scoped=rows.filter(r=>originInScope(r,scope)),selected=scoped.filter(r=>keys.has(originProductKey(r))),other=scoped.filter(r=>!keys.has(originProductKey(r)));
+      const matched=scoped.filter(r=>(!anchors||anchors.has(r.id))&&(!keys.size||keys.has(originProductKey(r))));
+      const total=sum(scoped),selectedFee=sum(selected),otherFee=sum(other),share=keys.size&&total>0&&selectedFee!==null&&!scoped.some(r=>r[fee]<0)?selectedFee/total:null;
+      const orders=ids(rows,'order'),orderSet=new Set(orders.filter(id=>!/[;,\n]/.test(id))),rowIds=new Set(rows.map(r=>r.id));
+      const related=rs.filter(r=>orderSet.has(r.order)&&!rowIds.has(r.id));
+      const issues=[];if(!rows[0][groupBy])issues.push('Identifier missing; source line kept separate');
+      if(rows.some(r=>['order','csi','contract'].some(k=>/[;,\n]/.test(r[k]||''))))issues.push('Multiple identifiers in a source cell; allocation not inferred');
+      if(scoped.some(r=>!r.order))issues.push('Underlying order missing');
+      if(total===null)issues.push('Annual fee incomplete or exchange rate required');
+      if(scoped.some(r=>r[fee]<0))issues.push('Negative fees; percentage not calculated');
+      if(rows.some(r=>!r.end))issues.push('End date missing or invalid');
+      const outsideScope=rows.filter(r=>!originInScope(r,scope));
+      if(outsideScope.length)issues.push('Other portfolios present; excluded from this fee percentage');
+      return {key:g.name,identifier:rows[0][groupBy]||'Identifier missing',rows,scoped,selected,other,matched,total,selectedFee,otherFee,share,orders,csis:ids(rows,'csi'),contracts:ids(rows,'contract'),countries:ids(rows,'country'),entities:ids(rows,'entity'),ends:ids(rows,'end'),outsideScope,related,issues};
+    }).filter(g=>g.matched.length&&(!keys.size||g.share===null||g.share*100>=Number(minShare)));
+    const value=g=>sort==='other'?g.otherFee:sort==='total'?g.total:g.share;
+    groups.sort((a,b)=>{const x=value(a),y=value(b);return (x===null)-(y===null)||(x===null?0:(sort==='other'?x-y:y-x))||a.identifier.localeCompare(b.identifier);});
+    return {groups,fee,scope,groupBy,hasSelection:keys.size>0};
+  }
+
   function purchasingRanking(rs,metric){
     const rank=(rows,key)=>group(rows,key).sort((a,b)=>(b[metric]||0)-(a[metric]||0)||a.name.localeCompare(b.name));
     return {total:aggregate(rs)[metric],countries:rank(rs,'country').map(g=>({...g,entities:rank(g.rows,'entity')})),entities:rank(rs,'entity')};
@@ -275,6 +305,6 @@ const Estate = (() => {
     if(review==='missing')selected=selected.filter(r=>!r.end);
     return {base,missing,aged,bands,selected:[...selected].sort((a,b)=>(a.orderDate||'9999').localeCompare(b.orderDate||'9999')||a.id.localeCompare(b.id))};
   }
-  return {configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,presetValue,organizationMatches,organizationPresets,evidenceMatches,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareSegment,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
+  return {originProductKey,originInScope,productOrigins,configure,licenseEntitlement,hardwarePurchaseCurrency,hardwareInvestmentReview,areas,presetValue,organizationMatches,organizationPresets,evidenceMatches,numeric,date,normalize,aggregate,total,group,measure,renewals,renewalWindow,daysUntil,select,convert,monthsBefore,recent,hardwareSegment,hardwareGroup,hardwareInvestment,purchasingRanking,entityRegister,recentGroups,entityCountryGroups,hardwareAge,hardwareAging,reportingAmount,ociCommitment,reportingRows,sourceRows,sourceAmount};
 })();
 if(typeof module!=='undefined')module.exports=Estate;

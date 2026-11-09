@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0 — 2026-11-09
+
+- Add Product origins to trace selected products by order, CSI or support contract, with separate software support, hardware support and subscription scopes.
+- Preserve complete group evidence across dashboard filters, expose other underlying-order rows, and export fee composition and structural review flags. Missing or multi-ID cells are never silently combined or allocated; unknown fees do not become zero.
+- Keep selection neutral: fee percentages are not savings or cancellation eligibility.
+
+
 ## 0.10.0 — 2026-11-04
 
 - Add the Oracle GLAS logo to the shared top-right header on every report section, using the approved compact layout and divider.

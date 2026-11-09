@@ -123,3 +123,5 @@ button.subtle,.data-table .link{color:#545454}.chips button{background:#f2f2f2}.
 @media(max-width:600px){.topline{grid-template-columns:minmax(0,1fr) 130px;padding:10px 14px}.topline>div:first-child{font-size:11px}.topline .top-actions{grid-column:1/3;grid-row:3;gap:6px}.topline .customer-release{grid-row:2}.topline .glas-header-brand{grid-row:1/3;padding-left:8px}.glas-header-brand img{width:130px}}
 
 }
+
+.origin-controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end}.origin-picker{margin-top:18px}.origin-picker summary{font-weight:600;margin-bottom:12px;cursor:pointer}.origin-picker input[type=search]{width:100%;max-width:450px}.origin-options{max-height:210px;overflow:auto;margin:12px 0}.origin-option{display:flex;align-items:start;gap:10px;padding:7px 0;font-weight:400}.origin-option[hidden]{display:none}.origin-option input{margin-top:3px;flex:none}.origins-table td{vertical-align:top}.origins-table th{min-width:110px}

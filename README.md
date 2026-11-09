@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.10.0** adds the approved Oracle GLAS logo to the shared header on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.11.0** adds the approved Oracle GLAS logo to the shared header on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -19,6 +19,8 @@ Open `dist/dashboard.html` in a current Chrome or Edge browser. It works as a lo
 The source layout is defined in [`schemas/eix-columns.json`](schemas/eix-columns.json). Both sheets are required; either may be header-only. For raw exports and reproducible source preparation, see [the source guide](docs/SOURCE_FORMAT.md).
 
 ## Included functionality
+
+- Product origins: product selection, order/CSI/support-contract grouping, full-group evidence, fee composition and CSV export. See [Product origins](docs/PRODUCT_ORIGINS.md).
 
 - About/scope page and product glossary.
 - Executive overview, investment versus recurring fee measures, and renewal timeline.
