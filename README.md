@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.11.0** adds the approved Oracle GLAS logo to the shared header on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.11.1** clarifies country financial and Recent Purchases help. It includes Product origins and the embedded Oracle GLAS header logo on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 

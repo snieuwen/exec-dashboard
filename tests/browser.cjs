@@ -26,6 +26,18 @@ const {build}=require('../scripts/build.cjs'),{fixture,workbook,ulaFixture}=requ
   await page.screenshot({path:path.join(qa,'generic-atlas.png'),fullPage:true});
   await page.locator('.nav [data-view="data"]').click();assert(!(await page.locator('#main').innerText()).includes('${esc('));await page.locator('#fx-currency').selectOption('EUR');await page.locator('#rate').fill('0.8');await page.locator('#rate-date').fill('2026-01-31');await page.locator('#apply-rate').click();await page.locator('.nav [data-view="overview"]').click();await page.locator('#currency').selectOption('EUR');
   await page.locator('.nav [data-view="overview"]').click();assert.equal(Number(await page.locator('[data-kpi="annual"]').getAttribute('data-report-amount')),480);
+  // Country help describes the actual column scope without duplicating the service glossary.
+  await page.locator('.nav [data-view="geography"]').click();
+  for(const [key,expected] of [['countryPurchase',/software licence purchase amounts/],['countrySoftwareSupport',/Software-support fees for the selected country/],['countryHardwareSupport',/Hardware-support fees for the selected country/]]){
+   await page.locator('.country-financial-detail [data-help="'+key+'"]').click();
+   const body=await page.locator('#help-body').innerText();assert.match(body,expected);assert(!/hw-details|sw-details|technical assistance|Original hardware purchase/.test(body));
+   if(key==='countryPurchase'){assert.match(body,/hardware purchases are excluded/);assert.match(body,/recorded order currency/);assert.match(body,/used directly/);assert.match(body,/dated exchange rates/);}
+   await page.locator('#help-dialog').evaluate(d=>d.close());
+  }
+  await page.locator('.nav [data-view="recent"]').click();await page.locator('[data-help="recent"]').click();
+  assert.match(await page.locator('#help-body').innerText(),/Order Date recorded for each software or hardware line/);assert(!/\b(?:AC|V)\b/.test(await page.locator('#help-body').innerText()));await page.locator('#help-dialog').evaluate(d=>d.close());
+  await page.locator('.nav [data-view="notice"]').click();assert.match(await page.locator('#main').innerText(),/Annual software support/);assert.match(await page.locator('#main').innerText(),/Annual hardware support/);
+  await page.locator('.nav [data-view="overview"]').click();
   // Saving a narrowed view must not make recipients reopen that selection.
   await page.locator('#area').selectOption('Hardware');
   assert.match(await page.locator('#announcement').innerText(),/1 active source records selected/);

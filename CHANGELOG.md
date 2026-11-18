@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.1 — 2026-11-18
+
+- Give Country financial detail its own concise, column-specific help. Explain software purchase currency selection and conversion without unrelated hardware policy; remove repeated support service definitions from these tooltips.
+- Describe the Recent Purchases order-date basis without spreadsheet column-letter jargon. Preserve the full Oracle explained glossary, source evidence and all calculations.
+
 ## 0.11.0 — 2026-11-09
 
 - Add Product origins to trace selected products by order, CSI or support contract, with separate software support, hardware support and subscription scopes.
