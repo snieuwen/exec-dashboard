@@ -1,3 +1,8 @@
+## 0.12.0 (18 November 2026)
+
+- Add source-implied FX with optional Currency ratios fallback and explicit provenance.
+- Preserve rate tables across preparation, reload and offline saved reports.
+
 # Changelog
 
 ## 0.11.1 — 2026-11-18

@@ -29,7 +29,7 @@ const EixXlsx = (()=>{
   const sharedText=await part('xl/sharedStrings.xml',true),shared=sharedText?tags(xml(sharedText),'si').map(n=>tags(n,'t').map(t=>t.textContent).join('')):[];
   const output={};
   for(const s of tags(workbook,'sheet')){
-   const name=s.getAttribute('name');if(!['sw-details','hw-details'].includes(name))continue;
+   const name=s.getAttribute('name');if(!['sw-details','hw-details','Currency ratios'].includes(name))continue;
    const rid=s.getAttribute('r:id')||s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id'),doc=xml(await part(rels.get(rid))),matrix=[];
    for(const row of tags(doc,'row')){
     const ri=Number(row.getAttribute('r'))-1;if(ri>200000)throw Error('Too many source rows.');const values=[];

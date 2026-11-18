@@ -44,3 +44,10 @@ From v0.7.1, generic server components within Engineered Systems are labelled Co
 ## Contextual financial help
 
 Country financial detail shows software licence purchases only in Original licence purchase; hardware acquisition is separate. Its help explains original-currency amounts, USD equivalents and dated conversion in plain language, including the configured software purchase currency assumption. The support columns describe their scope without repeating the service definitions in About this report / Oracle explained. Recent Purchases explains the recorded Order Date without spreadsheet column letters. These presentation changes do not change financial calculations or source evidence.
+
+
+## Workbook exchange-rate fallback (0.12.0)
+
+The optional Currency ratios worksheet, including hidden sheets, is preserved by the source preparer, browser loader and cleansing. Customer adapters must retain this matrix in source JSON. Original local amounts and supplied USD equivalents remain preferred for financial amounts. Conversion defaults prefer Active-line annual support local/USD pairs, then purchase pairs, then Currency ratios, then configured defaults. Pair rates use the median. Saved explicit rates override defaults. Workbook replacement refreshes automatic rates and retains user-entered overrides.
+
+Local Currency Rate is interpreted as USD per local unit and inverted to local units per USD. Duplicate country entries must agree; invalid, nonpositive or conflicting entries are ignored. The fallback is labelled as undated; the snapshot date is a reference date, not a market observation date. This explicitly requested fallback permits an undated workbook rate with a valid snapshot reference date.

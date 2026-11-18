@@ -1,0 +1,7 @@
+const test=require('node:test'),assert=require('node:assert/strict'),Rules=require('../src/rules.js'),{fixture}=require('./helpers.cjs');
+test('FX fallback preserves data precedence, inverse convention and rejects conflicting/invalid entries',()=>{
+ const s=fixture();s['Currency ratios']=[['Country','Currency','Currency Name','Local Currency Rate'],['A','EUR','Euro',2],['B','GBP','Pound',1.25],['C','GBP','Pound',1.25],['D','JPY','Yen',0],['E','CHF','Franc',1],['F','CHF','Franc',2]];
+ const p=Rules.prepare(s,{}, {snapshot:'2026-01-31'});assert.deepEqual(p.source['Currency ratios'],s['Currency ratios']);const fx=Rules.exchangeDefaults(p.source,'2026-01-31');assert.equal(fx.rates.EUR,.8);assert.equal(fx.rates.GBP,.8);assert.equal(fx.rates.JPY,undefined);assert.equal(fx.rates.CHF,undefined);assert.match(fx.rateOrigins.GBP,/Rate date not supplied/);assert.match(fx.rateOrigins.EUR,/annual support/);assert.equal(fx.rateDates.GBP,'2026-01-31');
+ const next=Rules.exchangeDefaults(fixture(),'2026-02-01');assert.equal(next.rates.GBP,undefined);assert.equal(Rules.exchangeDefaults(s,'').rates.GBP,undefined);
+ s['sw-details'][1][41]=null;s['sw-details'][2][41]=null;assert.match(Rules.exchangeDefaults(s,'2026-01-31').rateOrigins.EUR,/purchase/);
+});

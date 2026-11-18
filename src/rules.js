@@ -42,7 +42,31 @@ const DashboardRules=(()=>{
    });
    counts[sheet]={input:matrix.length-1,retained:source[sheet].length-1,excluded:dropped,excludedInactive,excludedPastEnd,excludedCustomer,missingEndDate,invalidEndDate,changed};
   }
+  if(Array.isArray(input['Currency ratios']))source['Currency ratios']=input['Currency ratios'].map(row=>Array.isArray(row)?row.slice():[]);
   return {source,origins,counts,excludedRows,snapshot,summary:JSON.stringify(counts)};
+ }
+
+ function exchangeDefaults(source,snapshot,defaults={}){
+  const out={rates:{...defaults.rates},rateDates:{...defaults.rateDates},rateOrigins:{...defaults.rateOrigins}};
+  const day=sourceDate(snapshot);if(!day)return out;
+  const set=(code,rate,origin)=>{out.rates[code]=rate;out.rateDates[code]=day;out.rateOrigins[code]=origin;};
+  const table=source['Currency ratios'];
+  if(Array.isArray(table)&&Array.isArray(table[0])){
+   const ci=table[0].indexOf('Currency'),ri=table[0].indexOf('Local Currency Rate'),groups=new Map();
+   if(ci>=0&&ri>=0)for(const row of table.slice(1)){
+    const code=String(row?.[ci]??'').trim().toUpperCase(),value=row?.[ri];
+    if(!/^[A-Z]{3}$/.test(code)||code==='USD')continue;
+    if(!groups.has(code))groups.set(code,[]);groups.get(code).push(value);
+   }
+   for(const [code,values]of groups)if(values.every(v=>typeof v==='number'&&Number.isFinite(v)&&v>0&&Math.abs(v-values[0])<=Math.abs(values[0])*1e-10)&&Number.isFinite(1/values[0]))set(code,1/values[0],'Workbook Currency ratios fallback; USD per local unit inverted. Rate date not supplied; snapshot reference date only.');
+  }
+  const rows=(source['sw-details']||[]).slice(1).filter(r=>String(r[11]).trim().toLowerCase()==='active');
+  const found=new Set();
+  for(const [local,usd,currency,label]of [[41,40,43,'annual support'],[37,36,42,'purchase']]){
+   const groups=new Map();for(const row of rows){const code=String(row[currency]??'').trim().toUpperCase(),a=row[local],b=row[usd];if(!/^[A-Z]{3}$/.test(code)||code==='USD'||![a,b].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>0)||!Number.isFinite(a/b))continue;if(!groups.has(code))groups.set(code,[]);groups.get(code).push(a/b);}
+   for(const [code,values]of groups){if(found.has(code))continue;values.sort((a,b)=>a-b);const n=values.length,median=n%2?values[(n-1)/2]:(values[n/2-1]+values[n/2])/2;set(code,median,'Source-implied median from '+n+' '+label+' local/USD pairs; snapshot reference date, not a market rate date.');found.add(code);}
+  }
+  return out;
  }
  function validateConfig(config){
   if(!config||typeof config!=='object'||Array.isArray(config))throw Error('Configuration must be an object.');
@@ -68,6 +92,6 @@ const DashboardRules=(()=>{
   }
   return config;
  }
- return {prepare,validateConfig,sourceDate};
+ return {prepare,validateConfig,sourceDate,exchangeDefaults};
 })();
 if(typeof module!=='undefined')module.exports=DashboardRules;

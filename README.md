@@ -1,6 +1,6 @@
 # Executive dashboard — generic core
 
-A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.11.1** clarifies country financial and Recent Purchases help. It includes Product origins and the embedded Oracle GLAS header logo on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
+A reusable, customer-neutral executive dashboard for an Oracle commercial estate. Version **0.12.0** adds source-implied FX and the optional Currency ratios fallback. It also clarifies country financial and Recent Purchases help. It includes Product origins and the embedded Oracle GLAS header logo on every report section, including offline saved reports. It includes the standard customer folder starter and a safe setup command. Hardware grouping includes Exadata, Exalogic, Private Cloud Appliance and Recovery Appliance under **Engineered Systems**, retaining component groups and original source evidence.
 
 This repository contains **no customer data, logos, customer themes, contract clauses, customer-specific exclusions or exchange-rate snapshots**. Its default build opens empty. A minimal grayscale layout keeps navigation, tables, maps, mobile views and printing usable; customer presentation is supplied separately.
 
@@ -112,3 +112,10 @@ Organisation presets and multi-field evidence search are shared core features. S
 ## Shared GLAS header
 
 The Oracle Global Licensing Advisory Services logo appears in the shared top-right header on every report section. The supplied logo is embedded in the standalone HTML and saved reports, with no external image request. Customer branding remains separate.
+
+
+## Workbook exchange-rate fallback (0.12.0)
+
+The optional Currency ratios worksheet, including hidden sheets, is preserved by the source preparer, browser loader and cleansing. Customer adapters must retain this matrix in source JSON. Original local amounts and supplied USD equivalents remain preferred for financial amounts. Conversion defaults prefer Active-line annual support local/USD pairs, then purchase pairs, then Currency ratios, then configured defaults. Pair rates use the median. Saved explicit rates override defaults. Workbook replacement refreshes automatic rates and retains user-entered overrides.
+
+Local Currency Rate is interpreted as USD per local unit and inverted to local units per USD. Duplicate country entries must agree; invalid, nonpositive or conflicting entries are ignored. The fallback is labelled as undated; the snapshot date is a reference date, not a market observation date. This explicitly requested fallback permits an undated workbook rate with a valid snapshot reference date.

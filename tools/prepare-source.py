@@ -33,6 +33,8 @@ def prepare(file):
                     row.append(value)
                 if any(value is not None for value in row):matrix.append(row)
             result[name]=matrix
+        if 'Currency ratios' in values.sheetnames:
+            result['Currency ratios']=[list(row) for row in values['Currency ratios'].iter_rows(values_only=True)]
         return result
     finally:values.close();formulas.close()
 
